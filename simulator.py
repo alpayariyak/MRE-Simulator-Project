@@ -20,7 +20,6 @@ trash_classes = ['aluminumCan',
                  'reject']
 
 
-# might not need these
 
 class Simulator_Object:
     def __init__(self, obj_class, x, y, speedx=0, speedy=0, rot=0, width=100, height=100):
@@ -35,6 +34,7 @@ class Simulator_Object:
         self.state = [x, y, width, height, speedx, speedy, rot]
 
 
+# might not need these
 # endboxes
 end1 = Simulator_Object('undergroundConvBelt',
                         cnvwidth - 80,  # x
