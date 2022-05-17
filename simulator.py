@@ -147,6 +147,7 @@ def makeRandomTrash(beltNumber):
             speedy=0,
             rot=random.randint(-90, 90)
         )
+        trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
     else:
         globals()[f'trash_object_{trash_id}'] = Trash_Object(
             random.choice(trash_classes),
@@ -156,17 +157,19 @@ def makeRandomTrash(beltNumber):
             speedy=0,
             rot=random.randint(-90, 90)
         )
+        trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
 
 makeRandomTrash(1)
-makeRandomTrash(1)
-makeRandomTrash(1)
-makeRandomTrash(1)
-makeRandomTrash(1)
-makeRandomTrash(1)
+makeRandomTrash(2)
+makeRandomTrash(3)
+makeRandomTrash(2)
+makeRandomTrash(3)
+makeRandomTrash(2)
 
-print(trash_objects[1].get_state())
-for i in range(300):
-    trash_objects[1].update_position()
-print(trash_objects[1].get_state())
-
-print(len(trash_objects))
+for i in range(5):
+    for id, trash in trash_objects.items():
+        trash.update_position()
+        if i % 1 == 0:
+            print(f"TrashID: {id}  State: {trash.get_state()}   (x, y, speedx, speedy)")
+        if id == 6 and i % 1 == 0:
+            print("\n")
