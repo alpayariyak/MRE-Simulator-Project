@@ -45,12 +45,13 @@ class Simulator_Object:
         self.speedy = speedy
         self.x = x
         self.y = y
-        self.state = [x, y, speedx, speedy]
+
 
         global totalObjects
         global totalRejects
         totalObjects += 1
-
+    def get_state(self):
+        return [self.x, self.y, self.speedx, self.speedy]
 
 # might not need these
 # endboxes
@@ -101,7 +102,7 @@ trash_bin = Simulator_Object('trashbin',
 belts = [belt1, belt2, belt3]
 endboxes = [end1, end2, end3]
 
-trash_objects = []
+trash_objects = {} #id:object
 
 
 class Trash_Object(Simulator_Object):
@@ -136,7 +137,7 @@ def makeRandomTrash(beltNumber):
             speedy=0,
             rot=random.randint(-90, 90)
         )
-
+        trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
     elif beltNumber == 2:
         globals()[f'trash_object_{trash_id}'] = Trash_Object(
             random.choice(trash_classes),
@@ -163,4 +164,9 @@ makeRandomTrash(1)
 makeRandomTrash(1)
 makeRandomTrash(1)
 
-print(totalRejects)
+print(trash_objects[1].get_state())
+for i in range(300):
+    trash_objects[1].update_position()
+print(trash_objects[1].get_state())
+
+print(len(trash_objects))
