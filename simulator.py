@@ -20,7 +20,6 @@ trash_classes = ['aluminumCan',
                  'reject']
 
 
-
 class Simulator_Object:
     def __init__(self, obj_class, x, y, speedx=0, speedy=0, rot=0, width=100, height=100):
         self.obj_class = obj_class
@@ -54,7 +53,7 @@ end3 = Simulator_Object('undergroundConvBelt',
                         width=100,  # width
                         height=200)  # height
 
-#belts
+# belts
 
 belt1 = Simulator_Object('ConvBeltNew',
                          -50,  # x
@@ -74,3 +73,8 @@ belt3 = Simulator_Object('ConvBeltNew',
                          width=cnvwidth + 150,  # width
                          height=160)  # height
 
+belts = [belt1, belt2, belt3]
+endboxes = [end1, end2, end3]
+
+import js2py
+js2py.translate_file('MRE-Simulator-Project/conveyer-stripped.js', 'MRE-Simulator-Project/translated.py')
