@@ -114,6 +114,13 @@ class Trash_Object(Simulator_Object):
         global totalRejects
         if self.obj_class == 'reject':
             totalRejects += 1
+    def update_position(self):
+        self.x = self.x + self.speedx
+        self.y = self.y + self.speedy
+
+    def set_position(self, new_x, new_y):
+        self.x = new_x
+        self.y = new_y
 
 
 print(len(trash_classes))
