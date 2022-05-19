@@ -164,6 +164,7 @@ class Trash_Object(Simulator_Object):
     def set_position(self, new_x, new_y):
         self.x = new_x
         self.y = new_y
+        self.hitbox = {"x": int(new_x + self.width / 2), "y": int(new_y + self.height / 2), "radius": 50}
 
 
 def makeRandomTrash(beltNumber):
@@ -228,26 +229,25 @@ randomtr = Trash_Object(
 print(randomtr in trash_bin)
 print(trash_bin.checkCoordinateIntersection(1512, 90))
 
+makeRandomTrash(1)
+makeRandomTrash(2)
+makeRandomTrash(3)
 score = 0
-for i in range(18000): #180000 ms in 3 minutes
-    if i % 50 == 0:
-        makeRandomTrash(1)
-        makeRandomTrash(2)
-        makeRandomTrash(3)
+for i in range(100): #180000 ms in 3 minutes
+    if i % 50 == 0 and i != 0:
+        trash_objects[list(trash_objects.keys())[0]].set_position(100, 50)
         if len(trash_objects) > 20:
             del trash_objects[list(trash_objects.keys())[0]]
             del trash_objects[list(trash_objects.keys())[1]]
             del trash_objects[list(trash_objects.keys())[2]]
 
-    if i % 10 == 0:
-        print(len(trash_objects))
+    if i % 10 == 0 and i != 0:
+        print(f'\n{i}\n')
         for trash_obj_id, trash_obj in trash_objects.items():
-
-            trash_obj.update_position()
-            print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
 
             if trash_obj in trash_bin:
                 score += 1
+                print('deleted')
                 del trash_obj
 
             else:
@@ -260,6 +260,10 @@ for i in range(18000): #180000 ms in 3 minutes
                 else:
                     trash_obj.setSpeed(0)
 
+            trash_obj.update_position()
+            print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+    if i % 70 == 0 and i != 0:
+        trash_objects[list(trash_objects.keys())[0]].set_position(100, 200)
 
 makeRandomTrash(1)
 makeRandomTrash(2)
