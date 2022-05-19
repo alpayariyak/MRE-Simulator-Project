@@ -60,7 +60,6 @@ class Simulator_Object:
         xcenter_self, ycenter_self, radius = self.hitbox["x"], self.hitbox["y"], self.hitbox["radius"]
 
         if type(item) is Simulator_Object or Trash_Object:
-
             xcenter_item, ycenter_item = item.hitbox["x"], item.hitbox["y"]
 
             if self.x + self.width > xcenter_item > self.x and self.y + self.height > ycenter_item > self.y:
@@ -68,17 +67,15 @@ class Simulator_Object:
             else:
                 return False
 
-        if type(item) is list:
+    def checkCoordinateIntersection(self, x, y):
+        dist = math.sqrt(
+            math.pow(abs(xcenter_self - x), 2) + math.pow(abs(ycenter_self - y), 2)
+        )
 
-            x_item, y_item = item
-            dist = math.sqrt(
-                math.pow(abs(xcenter_self - x_item), 2) + math.pow(abs(ycenter_self - y_item), 2)
-            )
-
-            if dist < radius:
-                return True
-            else:
-                return False
+        if dist < radius:
+            return True
+        else:
+            return False
 
 
 class Belt(Simulator_Object):
@@ -233,3 +230,4 @@ randomtr = Trash_Object(
 )
 
 print(randomtr in trash_bin)
+print(trash_bin.checkCoordinateIntersection(1512, 90))
