@@ -76,6 +76,9 @@ class Simulator_Object:
             return True
         else:
             return False
+    def setSpeed(self, speed_X, speedy_y = 0):
+        self.speedx = speed_X
+        self.speedy_y = speedy_y
 
 
 class Belt(Simulator_Object):
@@ -155,6 +158,8 @@ class Trash_Object(Simulator_Object):
     def update_position(self):
         self.x = self.x + self.speedx
         self.y = self.y + self.speedy
+        self.hitbox["x"] += self.speedx
+        self.hitbox["y"] += self.speedy
 
     def set_position(self, new_x, new_y):
         self.x = new_x
@@ -193,27 +198,18 @@ def makeRandomTrash(beltNumber):
         )
         trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
 
-makeRandomTrash(1)
-makeRandomTrash(2)
-makeRandomTrash(3)
-
-
-for i in range(5):
-    for id, trash in trash_objects.items():
-        trash.update_position()
-        if i % 1 == 0:
-            print(f"TrashID: {id}  State: {trash.get_state()}")
-        if id == 3 and i % 1 == 0:
-            print("\n")
-
-score = 0
-
-# for i in range(180000): #180000 ms in 3 minutes
-#     if i % 50:
-#         makeRandomTrash(1)
-#         makeRandomTrash(2)
-#         makeRandomTrash(3)
-#     if i % 10:
+# makeRandomTrash(1)
+# makeRandomTrash(2)
+# makeRandomTrash(3)
+#
+#
+# for i in range(5):
+#     for id, trash in trash_objects.items():
+#         trash.update_position()
+#         if i % 1 == 0:
+#             print(f"TrashID: {id}  State: {trash.get_state()}")
+#         if id == 3 and i % 1 == 0:
+#             print("\n")
 
 
 xcenter_self, ycenter_self, radius = trash_bin.hitbox["x"], trash_bin.hitbox["y"], trash_bin.hitbox["radius"]
@@ -231,3 +227,43 @@ randomtr = Trash_Object(
 
 print(randomtr in trash_bin)
 print(trash_bin.checkCoordinateIntersection(1512, 90))
+
+score = 0
+for i in range(18000): #180000 ms in 3 minutes
+    if i % 50 == 0:
+        makeRandomTrash(1)
+        makeRandomTrash(2)
+        makeRandomTrash(3)
+        if len(trash_objects) > 20:
+            del trash_objects[list(trash_objects.keys())[0]]
+            del trash_objects[list(trash_objects.keys())[1]]
+            del trash_objects[list(trash_objects.keys())[2]]
+
+    if i % 10 == 0:
+        print(len(trash_objects))
+        for trash_obj_id, trash_obj in trash_objects.items():
+
+            trash_obj.update_position()
+            print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+
+            if trash_obj in trash_bin:
+                score += 1
+                del trash_obj
+
+            else:
+                if 300 > trash_obj.hitbox['y'] > 200:
+                    trash_obj.setSpeed(belt1.belt_speed)
+                elif 500 > trash_obj.hitbox['y'] > 400:
+                    trash_obj.setSpeed(belt2.belt_speed)
+                elif 700 > trash_obj.hitbox['y'] > 600:
+                    trash_obj.setSpeed(belt3.belt_speed)
+                else:
+                    trash_obj.setSpeed(0)
+
+
+makeRandomTrash(1)
+makeRandomTrash(2)
+makeRandomTrash(3)
+
+
+print(trash_objects)
