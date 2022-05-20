@@ -229,20 +229,23 @@ randomtr = Trash_Object(
 print(randomtr in trash_bin)
 print(trash_bin.checkCoordinateIntersection(1512, 90))
 
-makeRandomTrash(1)
-makeRandomTrash(2)
-makeRandomTrash(3)
+
 score = 0
-for i in range(100): #180000 ms in 3 minutes
+for i in range(180000): #180000 ms in 3 minutes
     if i % 50 == 0 and i != 0:
-        trash_objects[list(trash_objects.keys())[0]].set_position(100, 50)
-        if len(trash_objects) > 20:
-            del trash_objects[list(trash_objects.keys())[0]]
-            del trash_objects[list(trash_objects.keys())[1]]
-            del trash_objects[list(trash_objects.keys())[2]]
+        makeRandomTrash(1)
+        makeRandomTrash(2)
+        makeRandomTrash(3)
+        if len(trash_objects) > 80:
+            j = 0
+            while j < 3:
+                if trash_objects[list(trash_objects.keys())[0]].speedx != 0:
+                    del trash_objects[list(trash_objects.keys())[0]]
+                    j += 1
+
 
     if i % 10 == 0 and i != 0:
-        print(f'\n{i}\n')
+        print(f'\n{len(trash_objects)}\n')
         for trash_obj_id, trash_obj in trash_objects.items():
 
             if trash_obj in trash_bin:
@@ -262,12 +265,7 @@ for i in range(100): #180000 ms in 3 minutes
 
             trash_obj.update_position()
             print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
-    if i % 70 == 0 and i != 0:
-        trash_objects[list(trash_objects.keys())[0]].set_position(100, 200)
 
-makeRandomTrash(1)
-makeRandomTrash(2)
-makeRandomTrash(3)
 
 
 print(trash_objects)
