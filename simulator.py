@@ -76,7 +76,8 @@ class Simulator_Object:
             return True
         else:
             return False
-    def setSpeed(self, speed_X, speedy_y = 0):
+
+    def setSpeed(self, speed_X, speedy_y=0):
         self.speedx = speed_X
         self.speedy_y = speedy_y
 
@@ -151,6 +152,8 @@ class Trash_Object(Simulator_Object):
         trash_id = trash_id + 1
         super().__init__(obj, x, y, speedx, speedy, rot, width, height)
 
+        self.deleted = False
+
         global totalRejects
         if self.obj_class == 'reject':
             totalRejects += 1
@@ -199,6 +202,7 @@ def makeRandomTrash(beltNumber):
         )
         trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
 
+
 # makeRandomTrash(1)
 # makeRandomTrash(2)
 # makeRandomTrash(3)
@@ -226,12 +230,13 @@ randomtr = Trash_Object(
     rot=random.randint(-90, 90)
 )
 
+trash_objects[0] = randomtr
+
 print(randomtr in trash_bin)
 print(trash_bin.checkCoordinateIntersection(1512, 90))
 
-
-score = 0
-for i in range(180000): #180000 ms in 3 minutes
+score = 100
+for i in range(100):  # 180000 ms in 3 minutes
     if i % 50 == 0 and i != 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
@@ -243,29 +248,27 @@ for i in range(180000): #180000 ms in 3 minutes
                     del trash_objects[list(trash_objects.keys())[0]]
                     j += 1
 
-
     if i % 10 == 0 and i != 0:
-        print(f'\n{len(trash_objects)}\n')
         for trash_obj_id, trash_obj in trash_objects.items():
 
-            if trash_obj in trash_bin:
-                score += 1
-                print('deleted')
-                del trash_obj
+            if not trash_obj.deleted:
 
-            else:
-                if 300 > trash_obj.hitbox['y'] > 200:
-                    trash_obj.setSpeed(belt1.belt_speed)
-                elif 500 > trash_obj.hitbox['y'] > 400:
-                    trash_obj.setSpeed(belt2.belt_speed)
-                elif 700 > trash_obj.hitbox['y'] > 600:
-                    trash_obj.setSpeed(belt3.belt_speed)
+                if trash_obj in trash_bin:
+                    score -= 1
+                    print(f'Trash ID {trash_obj_id} deleted')
+                    trash_obj.deleted = True
+
                 else:
-                    trash_obj.setSpeed(0)
+                    if 300 > trash_obj.hitbox['y'] > 200:
+                        trash_obj.setSpeed(belt1.belt_speed)
+                    elif 500 > trash_obj.hitbox['y'] > 400:
+                        trash_obj.setSpeed(belt2.belt_speed)
+                    elif 700 > trash_obj.hitbox['y'] > 600:
+                        trash_obj.setSpeed(belt3.belt_speed)
+                    else:
+                        trash_obj.setSpeed(0)
 
-            trash_obj.update_position()
-            print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
-
-
+                    trash_obj.update_position()
+                    print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
 
 print(trash_objects)
