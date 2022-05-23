@@ -3,7 +3,7 @@ import random
 
 #
 game_length = 180
-timestep = 0.001
+timestep = 0.1
 ms_to_s = 1000
 #
 
@@ -206,8 +206,8 @@ def makeRandomTrash(beltNumber):
             random.choice(trash_classes),
             -100 - random.randint(0, 150),
             600,
-            speedx=belt3.belt_speed,
-            speedy=0,
+            speedx = belt3.belt_speed,
+            speedy = 0,
             rot=random.randint(-90, 90)
         )
         trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
@@ -304,7 +304,6 @@ for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
     if i * timestep % check_interval == 0 and i * timestep != 0:
         print("\n")
         for trash_obj_id, trash_obj in trash_objects.items():
-
             if trash_obj.x > cnvwidth:
 
                 if trash_obj.obj_class == 'reject' and not trash_obj.deleted:
@@ -333,5 +332,5 @@ for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
                     print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
     if i * timestep % 170 == 0 and i * timestep != 0 :
         trash_objects[0] = randomtr
-print(score)
+print(score, totalRejects)
 
