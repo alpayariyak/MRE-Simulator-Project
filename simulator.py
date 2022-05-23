@@ -1,5 +1,12 @@
 import math
 
+
+#
+game_length = 180
+timestep = 1
+ms_to_s = 1000
+#
+
 # page height, easier to reference js code
 import random
 import math
@@ -37,15 +44,16 @@ trash_classes = aluminumCan \
 class Simulator_Object:
 
     def __init__(self, obj, x, y, speedx=0, speedy=0, rot=0, width=100, height=100):
+        global ms_to_s, timestep
         self.obj_class = obj.split('/')[0]
         self.object = obj
         self.rot = (rot * math.pi) / 180
         self.height = height
         self.width = width
-        self.speedx = speedx
-        self.speedy = speedy
+        self.speedx = speedx * ms_to_s * timestep
+        self.speedy = speedy * ms_to_s * timestep
         self.x = x
-        self.y = y
+        self.y = int(y)
         self.hitbox = {"x": int(x + width / 2), "y": int(y + height / 2), "radius": 50}
 
         global totalObjects
@@ -92,7 +100,10 @@ class Belt(Simulator_Object):
                  height=160,
                  obj='ConvBeltNew'):
 
+        global ms_to_s, timestep
+
         belt_speeds = [3, 2, 4]
+        belt_speeds = [speed * ms_to_s * timestep for speed in belt_speeds]
         if belt_number == 1:
             self.y = 185
             self.belt_speed = belt_speeds[0]
@@ -149,6 +160,7 @@ trash_objects = {}  # id:object
 class Trash_Object(Simulator_Object):
     def __init__(self, obj, x, y, speedx=0, speedy=0, rot=0, width=100, height=100):
         global trash_id
+
         trash_id = trash_id + 1
         super().__init__(obj, x, y, speedx, speedy, rot, width, height)
 
@@ -230,14 +242,13 @@ randomtr = Trash_Object(
     rot=random.randint(-90, 90)
 )
 
-trash_objects[0] = randomtr
-
 print(randomtr in trash_bin)
 print(trash_bin.checkCoordinateIntersection(1512, 90))
 
 score = 100
-for i in range(100):  # 180000 ms in 3 minutes
-    if i % 50 == 0 and i != 0:
+
+for i in range(int(game_length/timestep)):  # 180000 ms in 3 minutes
+    if i % 500 * ms_to_s * timestep == 0 and i != 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
         makeRandomTrash(3)
@@ -248,7 +259,7 @@ for i in range(100):  # 180000 ms in 3 minutes
                     del trash_objects[list(trash_objects.keys())[0]]
                     j += 1
 
-    if i % 10 == 0 and i != 0:
+    if i % 10 * ms_to_s * timestep == 0 and i != 0:
         for trash_obj_id, trash_obj in trash_objects.items():
 
             if not trash_obj.deleted:
@@ -270,5 +281,17 @@ for i in range(100):  # 180000 ms in 3 minutes
 
                     trash_obj.update_position()
                     print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+    if i % 75 * ms_to_s * timestep == 0 and i != 0:
+        trash_objects[0] = randomtr
+
+
+class Mouse:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.speedx = x
+        self.speedy = y
+
+
 
 print(trash_objects)

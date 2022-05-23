@@ -420,54 +420,10 @@ function Component(width, height, x, y, color) {
   };
 }
 
-function textComp(text, x, y, color) {
-  this.text = text;
-  this.x = x;
-  this.y = y;
-  this.color = color;
-  this.font = "40px Arial";
-  this.width = myConveyer.context.measureText(this.text).width;
-  this.update = function () {
-    var ctx = myConveyer.context;
-    ctx.fillStyle = "black";
-    ctx.font = this.font;
-    ctx.fillText(this.text, this.x, this.y);
-  };
-  this.changeText = function (text) {
-    this.text = text;
-  };
-}
 
 var prev;
 var do1 = true;
 
-function falseAlarm(cx, cy, w, h, color, speedx = 0, speedy = 0) {
-  this.width = w;
-  this.height = h;
-  this.cx = cx;
-  this.cy = cy;
-  this.speedx = speedx;
-  this.speedy = speedy;
-  this.color = color;
-  this.update = function () {
-    var ctx = myConveyer.context;
-    if (!softHighlight) {
-      ctx.beginPath();
-      ctx.rect(this.cx - this.width / 2, this.cy - this.height / 2, this.width, this.height);
-      ctx.lineWidth = 7;
-      ctx.strokeStyle = color;
-      ctx.stroke();
-    } else {
-      var size = sampleDistribution(Math.random(), faSizeProbDist);
-      var conf = getBetaDistribution(2, 4.675);
-      drawGrad(ctx, this.cx, this.cy, size, conf);
-    }
-  };
-  this.newPos = function () {
-    this.cx += this.speedx;
-    this.cy += this.speedy;
-  };
-}
 
 function updateConveyer() {
   myConveyer.clear();
@@ -644,13 +600,6 @@ function updateConveyer() {
     });
   }
 }
-function randn_bm() {
-  var u = 0,
-    v = 0;
-  while (u === 0) u = Math.random(); //Converting [0,1) to (0,1)
-  while (v === 0) v = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-}
 
 function recordEvent(type, x1, y1, w, h, detected, confScore) {
   userEvents["event" + myConveyer.frameNo] = {
@@ -774,55 +723,4 @@ function myUp(e) {
   }
   toDrag = false;
 }
-
-// rnd is a number between 0 and 1
-// dist is a distribution in a JSON format ordered from smallest probability to largest
-// returns object with the lower (one) and upper (two) bounds if sampling confidence, x (one) y (two) if sampling center, dcx (one) dcy (two) if sampling center offset, w (one) h (two) if sampling size
-function sampleDistribution(rnd, dist) {
-  var ret = {};
-  var prevProb = 0;
-  $.each(dist, function (k, val) {
-    prevProb += Number(k);
-    if (rnd < prevProb) {
-      (ret["one"] = Number(val.slice(0, val.indexOf(",")))),
-        (ret["two"] = Number(val.slice(val.indexOf(",") + 1)));
-      return false;
-    }
-  });
-  return ret;
-}
-
-var redRect = new Image(100, 100);
-redRect.src = "RedRect.png";
-
-function drawGrad(ctx, x, y, size, conf) {
-  // outerCircleRadius = 40;
-  // innerCirlceRadius = 8;
-
-  //var grd = ctx.createRadialGradient(xGradPos, yGradPos, outerCircleRadius, xGradPos, yGradPos, innerCirlceRadius);
-  //grd.addColorStop(0, "rgba(255, 0, 0, 0)");
-  //grd.addColorStop(1, color);
-
-  if (isNaN(x) || isNaN(y) || isNaN(size.one) || isNaN(size.two)) {
-    return;
-  }
-
-
-  ctx.beginPath();
-  ctx.rect(x, y, size.one, size.two);
-  ctx.lineWidth = 7;
-  ctx.strokeStyle = "rgba(255, 0, 0, " + conf + ")";
-  ctx.stroke();
-
-
-  //ctx.fillStyle = "rgba(255, 0, 0, " + conf + ")";
-  //ctx.fillRect(x, y, size.one, size.two);
-}
-
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min) + min);
-}
-
-function getBetaDistribution(alpha, beta) {
-  return d3.randomBeta(alpha, beta)();
-}
+\
