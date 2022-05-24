@@ -3,7 +3,7 @@ import random
 
 #
 game_length = 180
-timestep = 0.1
+timestep = 1
 ms_to_s = 1000
 #
 
@@ -48,8 +48,8 @@ class Simulator_Object:
         self.rot = (rot * math.pi) / 180
         self.height = height
         self.width = width
-        self.speedx = speedx * ms_to_s * timestep * 0.1
-        self.speedy = speedy * ms_to_s * timestep * 0.1
+        self.speedx = speedx
+        self.speedy = speedy
         self.x = x
         self.y = int(y)
         self.hitbox = {"x": int(x + width / 2), "y": int(y + height / 2), "radius": 50}
@@ -100,8 +100,8 @@ class Belt(Simulator_Object):
 
         global ms_to_s, timestep
 
-        belt_speeds = [3, 2, 4]
-        belt_speeds = [speed * 0.1 * ms_to_s * timestep for speed in belt_speeds]
+        belt_speeds = [300, 200, 400]
+
         if belt_number == 1:
             self.y = 185
             self.belt_speed = belt_speeds[0]
@@ -179,6 +179,12 @@ class Trash_Object(Simulator_Object):
         self.y = new_y
         self.hitbox = {"x": int(new_x + self.width / 2), "y": int(new_y + self.height / 2), "radius": 50}
 
+    def dragToTrash(self):
+        self.x = 1512
+        self.y = 90
+        self.hitbox = {"x": int(self.x + self.width / 2), "y": int(self.y + self.height / 2), "radius": 50}
+        self.speedx = 0
+        self.speedy = 0
 
 def makeRandomTrash(beltNumber):
     if beltNumber == 1:
@@ -313,6 +319,11 @@ for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
 
             if not trash_obj.deleted:
 
+                #policy - always drag
+                if cnvwidth/2 + 200 > trash_obj.hitbox["x"] > cnvwidth/2 - 200:
+                    trash_obj.dragToTrash()
+                    print("trash in the middle")
+
                 if trash_obj in trash_bin and trash_obj.obj_class != 'reject':
                     score -= 1
                     print(f'Trash ID {trash_obj_id} deleted')
@@ -330,7 +341,6 @@ for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
 
                     trash_obj.update_position()
                     print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
-    if i * timestep % 170 == 0 and i * timestep != 0 :
-        trash_objects[0] = randomtr
+
 print(score, totalRejects)
 
