@@ -3,7 +3,7 @@ import random
 
 #
 game_length = 180
-timestep = 1
+timestep = 0.01
 ms_to_s = 1000
 #
 
@@ -101,7 +101,7 @@ class Belt(Simulator_Object):
         global ms_to_s, timestep
 
         belt_speeds = [300, 200, 400]
-
+        belt_speeds = [speed*timestep for speed in belt_speeds]
         if belt_number == 1:
             self.y = 185
             self.belt_speed = belt_speeds[0]
@@ -252,43 +252,6 @@ print(trash_bin.checkCoordinateIntersection(1512, 90))
 score = 100
 
 
-# for i in range(int(game_length/timestep)):  # 180000 ms in 3 minutes
-#     if i * ms_to_s * timestep % 500  == 0 and i != 0:
-#         makeRandomTrash(1)
-#         makeRandomTrash(2)
-#         makeRandomTrash(3)
-#         if len(trash_objects) > 80:
-#             j = 0
-#             while j < 3:
-#                 if trash_objects[list(trash_objects.keys())[0]].speedx != 0:
-#                     del trash_objects[list(trash_objects.keys())[0]]
-#                     j += 1
-#
-#     if i * ms_to_s * timestep % 10 == 0 and i != 0:
-#         for trash_obj_id, trash_obj in trash_objects.items():
-#
-#             if not trash_obj.deleted:
-#
-#                 if trash_obj in trash_bin:
-#                     score -= 1
-#                     print(f'Trash ID {trash_obj_id} deleted')
-#                     trash_obj.deleted = True
-#
-#                 else:
-#                     if 300 > trash_obj.hitbox['y'] > 200:
-#                         trash_obj.setSpeed(belt1.belt_speed)
-#                     elif 500 > trash_obj.hitbox['y'] > 400:
-#                         trash_obj.setSpeed(belt2.belt_speed)
-#                     elif 700 > trash_obj.hitbox['y'] > 600:
-#                         trash_obj.setSpeed(belt3.belt_speed)
-#                     else:
-#                         trash_obj.setSpeed(0)
-#
-#                     trash_obj.update_position()
-#                     print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
-#     if i * ms_to_s * timestep % 75  == 0 and i != 0:
-#         trash_objects[0] = randomtr
-
 
 class Mouse:
     def __init__(self, x, y):
@@ -296,18 +259,19 @@ class Mouse:
         self.y = y
         self.speedx = x
         self.speedy = y
-
+j = 0
 
 for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
 
-    create_interval = 5  # seconds
-    check_interval = 1  # second
-    if i * timestep % create_interval == 0 and i * timestep != 0:
+    create_interval = 0.5 * ms_to_s # 5 seconds
+    check_interval = 1 * ms_to_s # 1 second
+    if i * timestep * ms_to_s % create_interval == 0 and i * timestep != 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
         makeRandomTrash(3)
+        j += 1
 
-    if i * timestep % check_interval == 0 and i * timestep != 0:
+    if i:
         print("\n")
         for trash_obj_id, trash_obj in trash_objects.items():
             if trash_obj.x > cnvwidth:
@@ -320,9 +284,9 @@ for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
             if not trash_obj.deleted:
 
                 #policy - always drag
-                if cnvwidth/2 + 200 > trash_obj.hitbox["x"] > cnvwidth/2 - 200:
-                    trash_obj.dragToTrash()
-                    print("trash in the middle")
+                # if cnvwidth/2 + 200 > trash_obj.hitbox["x"] > cnvwidth/2 - 200:
+                #     trash_obj.dragToTrash()
+                #     print("trash in the middle")
 
                 if trash_obj in trash_bin and trash_obj.obj_class != 'reject':
                     score -= 1
@@ -342,5 +306,5 @@ for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
                     trash_obj.update_position()
                     print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
 
-print(score, totalRejects)
+print(score, totalRejects, j)
 
