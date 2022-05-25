@@ -3,8 +3,9 @@ import random
 
 #
 game_length = 180
-timestep = 0.01
-ms_to_s = 1000
+s_to_ms = 1000
+timestep = 0.1
+create_interval = 0.5 * s_to_ms  # 5 seconds
 #
 
 # page height, easier to reference js code
@@ -42,7 +43,7 @@ trash_classes = aluminumCan \
 class Simulator_Object:
 
     def __init__(self, obj, x, y, speedx=0, speedy=0, rot=0, width=100, height=100):
-        global ms_to_s, timestep
+        global s_to_ms, timestep
         self.obj_class = obj.split('/')[0]
         self.object = obj
         self.rot = (rot * math.pi) / 180
@@ -74,6 +75,8 @@ class Simulator_Object:
                 return False
 
     def checkCoordinateIntersection(self, x, y):
+        xcenter_self, ycenter_self, radius = self.hitbox["x"], self.hitbox["y"], self.hitbox["radius"]
+
         dist = math.sqrt(
             math.pow(abs(xcenter_self - x), 2) + math.pow(abs(ycenter_self - y), 2)
         )
@@ -98,10 +101,10 @@ class Belt(Simulator_Object):
                  height=160,
                  obj='ConvBeltNew'):
 
-        global ms_to_s, timestep
+        global s_to_ms, timestep
 
         belt_speeds = [300, 200, 400]
-        belt_speeds = [speed*timestep for speed in belt_speeds]
+        belt_speeds = [speed * timestep for speed in belt_speeds]
         if belt_number == 1:
             self.y = 185
             self.belt_speed = belt_speeds[0]
@@ -114,26 +117,6 @@ class Belt(Simulator_Object):
 
         super().__init__(obj, x, self.y, speedx, speedy, rot, width, height)
 
-
-# might not need these
-# endboxes
-end1 = Simulator_Object('undergroundConvBelt',
-                        cnvwidth - 80,  # x
-                        150,  # y
-                        width=100,  # width
-                        height=200)  # height
-
-end2 = Simulator_Object('undergroundConvBelt',
-                        cnvwidth - 80,  # x
-                        350,  # y
-                        width=100,  # width
-                        height=200)  # height
-
-end3 = Simulator_Object('undergroundConvBelt',
-                        cnvwidth - 80,  # x
-                        550,  # y
-                        width=100,  # width
-                        height=200)  # height
 
 # belts
 
@@ -186,6 +169,7 @@ class Trash_Object(Simulator_Object):
         self.speedx = 0
         self.speedy = 0
 
+
 def makeRandomTrash(beltNumber):
     if beltNumber == 1:
         globals()[f'trash_object_{trash_id}'] = Trash_Object(
@@ -212,8 +196,8 @@ def makeRandomTrash(beltNumber):
             random.choice(trash_classes),
             -100 - random.randint(0, 150),
             600,
-            speedx = belt3.belt_speed,
-            speedy = 0,
+            speedx=belt3.belt_speed,
+            speedy=0,
             rot=random.randint(-90, 90)
         )
         trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
@@ -233,10 +217,6 @@ def makeRandomTrash(beltNumber):
 #             print("\n")
 
 
-xcenter_self, ycenter_self, radius = trash_bin.hitbox["x"], trash_bin.hitbox["y"], trash_bin.hitbox["radius"]
-
-print(xcenter_self, ycenter_self, radius)
-
 randomtr = Trash_Object(
     'aluminumCan',
     1512,
@@ -252,45 +232,62 @@ print(trash_bin.checkCoordinateIntersection(1512, 90))
 score = 100
 
 
-
 class Mouse:
     def __init__(self, x, y):
         self.x = x
         self.y = y
         self.speedx = x
         self.speedy = y
+
+
 j = 0
+k = 0
+m = 0
+reward = 100
 
-for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
+f = open('rollout.txt', 'w')
+for i in range(180000):  # 180000 ms in 3 minutes
 
-    create_interval = 0.5 * ms_to_s # 5 seconds
-    check_interval = 1 * ms_to_s # 1 second
-    if i * timestep * ms_to_s % create_interval == 0 and i * timestep != 0:
+    if i % create_interval == 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
         makeRandomTrash(3)
         j += 1
 
-    if i:
-        print("\n")
+    if i % (timestep * s_to_ms) == 0:
+        k += 1
+        deletecalled = False
         for trash_obj_id, trash_obj in trash_objects.items():
+
+
             if trash_obj.x > cnvwidth:
 
                 if trash_obj.obj_class == 'reject' and not trash_obj.deleted:
+                    reward -= 1
                     score -= 1
-                    print(f'Trash ID {trash_obj_id} reject, total: {totalRejects}')
+                    # print(f'Trash ID {trash_obj_id} reject, total: {totalRejects}')
                 trash_obj.deleted = True
 
             if not trash_obj.deleted:
 
-                #policy - always drag
+                # policy - always drag
                 # if cnvwidth/2 + 200 > trash_obj.hitbox["x"] > cnvwidth/2 - 200:
                 #     trash_obj.dragToTrash()
                 #     print("trash in the middle")
 
+                if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 250) and trash_obj.obj_class == 'reject':
+                    trash_obj.dragToTrash()
+                    deletecalled = True
+                    reward -= 0.1
+                    m += 1
+
                 if trash_obj in trash_bin and trash_obj.obj_class != 'reject':
                     score -= 1
+                    reward -= 1
                     print(f'Trash ID {trash_obj_id} deleted')
+                    trash_obj.deleted = True
+
+                elif trash_obj in trash_bin and trash_obj.obj_class == 'reject':
                     trash_obj.deleted = True
 
                 else:
@@ -305,6 +302,23 @@ for i in range(int(game_length / timestep)):  # 180000 ms in 3 minutes
 
                     trash_obj.update_position()
                     print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+                    f.write(f"\nTrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
 
-print(score, totalRejects, j)
+        print(f"Score: {score}\nTotal Rejects: {totalRejects}"
+              f"\nTimestep: {k}"
+              f"\nReward: {reward}\n")
+        f.write('\n------------------------------------------')
+        f.write(f"\nTimestep: {k}"
+                f"\nScore: {score}"
+                f"\nReward: {reward}"
+                f"\nAction Taken:")
+        if deletecalled:
+            f.write(" Dispose non-recyclable from middle\n\n")
+        else:
+            f.write(" none\n\n")
 
+print(f"Score: {score}\nTotal Rejects: {totalRejects}"
+      f"\nTimes Objects Were Created: {j}"
+      f"\nTimestep total: {k}"
+      f"\nTimes Policy Called: {m}"
+      f"\nReward: {reward}")
