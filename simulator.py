@@ -118,6 +118,26 @@ class Belt(Simulator_Object):
         super().__init__(obj, x, self.y, speedx, speedy, rot, width, height)
 
 
+# might not need these
+# endboxes
+end1 = Simulator_Object('undergroundConvBelt',
+                        cnvwidth - 80,  # x
+                        150,  # y
+                        width=100,  # width
+                        height=200)  # height
+
+end2 = Simulator_Object('undergroundConvBelt',
+                        cnvwidth - 80,  # x
+                        350,  # y
+                        width=100,  # width
+                        height=200)  # height
+
+end3 = Simulator_Object('undergroundConvBelt',
+                        cnvwidth - 80,  # x
+                        550,  # y
+                        width=100,  # width
+                        height=200)  # height
+
 # belts
 
 belt1 = Belt(1)
@@ -245,7 +265,7 @@ k = 0
 m = 0
 reward = 100
 
-f = open('rollout.txt', 'w')
+f = open('MRE-Simulator-Project/rollout.txt', 'w')
 for i in range(180000):  # 180000 ms in 3 minutes
 
     if i % create_interval == 0:

@@ -265,7 +265,7 @@ k = 0
 m = 0
 reward = 100
 
-f = open('rollout.txt', 'w')
+f = open('rollout.txt', 'r')
 for i in range(180000):  # 180000 ms in 3 minutes
 
     if i % create_interval == 0:
