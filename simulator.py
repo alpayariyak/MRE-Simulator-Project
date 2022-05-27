@@ -251,6 +251,9 @@ print(trash_bin.checkCoordinateIntersection(1512, 90))
 
 score = 100
 
+def probability(prob):
+    return random.random() < prob
+
 
 class Mouse:
     def __init__(self, x, y):
@@ -260,85 +263,144 @@ class Mouse:
         self.speedy = y
 
 
-j = 0
-k = 0
-m = 0
-reward = 100
+def policy(policy_n):
+    j = 0
+    k = 0
+    m = 0
+    totalReward = 100
+    reward = 0
+    score = 100
+    fatigue = 0
 
-f = open('MRE-Simulator-Project/rollout.txt', 'w')
-for i in range(180000):  # 180000 ms in 3 minutes
+    # f = open('MRE-Simulator-Project/rollout.txt', 'w')
+    for i in range(180000):  # 180000 ms in 3 minutes
 
-    if i % create_interval == 0:
-        makeRandomTrash(1)
-        makeRandomTrash(2)
-        makeRandomTrash(3)
-        j += 1
+        if i % create_interval == 0:
+            makeRandomTrash(1)
+            makeRandomTrash(2)
+            makeRandomTrash(3)
+            j += 1
 
-    if i % (timestep * s_to_ms) == 0:
-        k += 1
-        deletecalled = False
-        for trash_obj_id, trash_obj in trash_objects.items():
+        if i % (timestep * s_to_ms) == 0:
+            reward = 0
+            k += 1
+            deletecalled = False
+            for trash_obj_id, trash_obj in trash_objects.items():
 
+                if trash_obj.x > cnvwidth:
 
-            if trash_obj.x > cnvwidth:
-
-                if trash_obj.obj_class == 'reject' and not trash_obj.deleted:
-                    reward -= 1
-                    score -= 1
-                    # print(f'Trash ID {trash_obj_id} reject, total: {totalRejects}')
-                trash_obj.deleted = True
-
-            if not trash_obj.deleted:
-
-                # policy - always drag
-                # if cnvwidth/2 + 200 > trash_obj.hitbox["x"] > cnvwidth/2 - 200:
-                #     trash_obj.dragToTrash()
-                #     print("trash in the middle")
-
-                if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 250) and trash_obj.obj_class == 'reject':
-                    trash_obj.dragToTrash()
-                    deletecalled = True
-                    reward -= 0.1
-                    m += 1
-
-                if trash_obj in trash_bin and trash_obj.obj_class != 'reject':
-                    score -= 1
-                    reward -= 1
-                    print(f'Trash ID {trash_obj_id} deleted')
+                    if trash_obj.obj_class == 'reject' and not trash_obj.deleted:
+                        reward -= 1
+                        score -= 1
                     trash_obj.deleted = True
 
-                elif trash_obj in trash_bin and trash_obj.obj_class == 'reject':
-                    trash_obj.deleted = True
+                if not trash_obj.deleted:
 
-                else:
-                    if 300 > trash_obj.hitbox['y'] > 200:
-                        trash_obj.setSpeed(belt1.belt_speed)
-                    elif 500 > trash_obj.hitbox['y'] > 400:
-                        trash_obj.setSpeed(belt2.belt_speed)
-                    elif 700 > trash_obj.hitbox['y'] > 600:
-                        trash_obj.setSpeed(belt3.belt_speed)
+                    ybelt_fatigue_dict = {650:0.0003, 450:0.0005, 250:0.0007  }
+                    if policy_n == 0:
+                        pass
+                    elif policy_n == 1:
+                        for ybelt, belt_fatigue in ybelt_fatigue_dict.items():
+                            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt) and trash_obj.obj_class == 'reject' and not deletecalled:
+                                if probability(1-fatigue):
+                                    trash_obj.dragToTrash()
+                                    deletecalled = True
+                                fatigue += belt_fatigue
+                                m += 1
+                    elif policy_n == 2:
+                        for ybelt, belt_fatigue in ybelt_fatigue_dict.items():
+                            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt) and trash_obj.obj_class != 'reject' and not deletecalled:
+                                if probability(1 - fatigue):
+                                    trash_obj.dragToTrash()
+                                    deletecalled = True
+                                fatigue += belt_fatigue
+                                m += 1
+                    elif policy_n == 3:
+                        for ybelt, belt_fatigue in ybelt_fatigue_dict.items():
+                            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt) and not deletecalled:
+                                if probability(1 - fatigue):
+                                    trash_obj.dragToTrash()
+                                    deletecalled = True
+                                fatigue += belt_fatigue
+                                m += 1
+
+
+
+                    if trash_obj in trash_bin and trash_obj.obj_class != 'reject':
+                        score -= 1
+                        reward -= 1
+                        trash_obj.deleted = True
+
+                    elif trash_obj in trash_bin and trash_obj.obj_class == 'reject':
+                        trash_obj.deleted = True
+
                     else:
-                        trash_obj.setSpeed(0)
+                        if 300 > trash_obj.hitbox['y'] > 200:
+                            trash_obj.setSpeed(belt1.belt_speed)
+                        elif 500 > trash_obj.hitbox['y'] > 400:
+                            trash_obj.setSpeed(belt2.belt_speed)
+                        elif 700 > trash_obj.hitbox['y'] > 600:
+                            trash_obj.setSpeed(belt3.belt_speed)
+                        else:
+                            trash_obj.setSpeed(0)
+                        # print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+                        # f.write(f"\nTrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+                        trash_obj.update_position()
+            totalReward += reward
 
-                    trash_obj.update_position()
-                    print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
-                    f.write(f"\nTrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+            # print(f"Score: {score}\nTotal Rejects: {totalRejects}"
+            #       f"\nTimestep: {k}"
+            #       f"\nReward: {reward}\n")
+            # f.write('\n------------------------------------------')
+            # f.write(f"\nTimestep: {k}"
+            #         f"\nScore: {score}"
+            #         f"\nReward: {reward:.1f}"
+            #         f"\nAction Taken:")
+            # if deletecalled:
+            #     f.write(" Dispose non-recyclable from middle\n\n")
+            # else:
+            #     f.write(" none\n\n")
 
-        print(f"Score: {score}\nTotal Rejects: {totalRejects}"
-              f"\nTimestep: {k}"
-              f"\nReward: {reward}\n")
-        f.write('\n------------------------------------------')
-        f.write(f"\nTimestep: {k}"
-                f"\nScore: {score}"
-                f"\nReward: {reward}"
-                f"\nAction Taken:")
-        if deletecalled:
-            f.write(" Dispose non-recyclable from middle\n\n")
-        else:
-            f.write(" none\n\n")
+    # print(f"Score: {score}\nTotal Rejects: {totalRejects}"
+    #       f"\nTimes Objects Were Created: {j}"
+    #       f"\nTimestep total: {k}"
+    #       f"\nTimes Policy Called: {m}"
+    #       f"\nTotal Reward: {totalReward:.1f}")
+    # f.write(f"\n\n-----Final Stats-----\nScore: {score}\nTotal Rejects: {totalRejects}"
+    #         f"\nTimes Objects Were Created: {j}"
+    #         f"\nTimestep total: {k}"
+    #         f"\nTimes Policy Called: {m}"
+    #         f"\nTotal Reward: {totalReward:.1f}")
 
-print(f"Score: {score}\nTotal Rejects: {totalRejects}"
-      f"\nTimes Objects Were Created: {j}"
-      f"\nTimestep total: {k}"
-      f"\nTimes Policy Called: {m}"
-      f"\nReward: {reward}")
+    return score, totalReward, fatigue
+
+
+
+
+def average_policy(policy_n, n):
+    avg_score = 0
+    avg_reward = 0
+    avg_fatigue = 0
+    for i in range(n):
+        if policy_n == 1:
+            curr_score, curr_reward, curr_fatigue = policy(1)
+        elif policy_n == 2:
+            curr_score, curr_reward, curr_fatigue = policy(2)
+        elif policy_n == 3:
+            curr_score, curr_reward, curr_fatigue = policy(3)
+        elif policy_n == 0:
+            curr_score, curr_reward, curr_fatigue = policy(0)
+        avg_score += curr_score
+        avg_reward += curr_reward
+        avg_fatigue += curr_fatigue
+        print(policy_n, f"{int((i/n)* 100)}%")
+    return avg_score/n, avg_reward/n, avg_fatigue/n
+
+policies = {0:'Do nothing', 1:'Drag Non-Recyclable from the middle', 2:"Drag Recyclable from the middle", 3:"Drag all items from middle"}
+avgtext = open("averages.txt", 'w')
+for a_policy, description in policies.items():
+    n_score, n_reward, n_fatigue = average_policy(a_policy, 10)
+    avgtext.write(f"\nPolicy: {policies[a_policy]}"
+                  f"\nAverage Score: {n_score}"
+                  f"\nFatigue: {n_fatigue}\n")
+                  # f"\nAverage Reward: {n_reward}\n")
