@@ -20,14 +20,22 @@ trash_id = 0
 #
 
 aluminumCan = [f'aluminumCan/can{i}.png' for i in range(10)]
+aluminumCan_visibility =  [2, 3, 3, 2, 3, 3, 3, 2, 3, 3]
 cardboard = [f'cardboard/cardboard{i}.png' for i in range(10)]
+cardboard_visibility = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
 carton = [f'carton/carton{i}.png' for i in range(10)]
+carton_visibility = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
 glassBottle = [f'glassBottle/glassBottle{i}.png' for i in range(9)]
+glassBottle_visibility = [3, 3, 2, 3, 3, 3, 2, 2, 3]
 paper = [f'paper/paper{i}.png' for i in range(21)]
+paper_visibility = [3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
 paperBag = [f'paperBag/paperBag{i}.png' for i in range(15)]
+paperBag_visibility = [3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3]
 plasticBag = [f'plasticBag/plasticBag{i}.png' for i in range(23)]
-plasticBottle = [f'plasticBottle/plasticBottle{i}.png' for i in range(12)]
+plasticBag_visibility = [3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3]
+# plasticBottle = [f'plasticBottle/plasticBottle{i}.png' for i in range(12)]
 reject = [f'reject/reject{i}.png' for i in range(20)]
+reject_visibility = [1, 2, 3, 3, 3, 1, 2, 3, 3, 1, 2, 1, 3, 1, 2, 3, 2, 2, 1, 2]
 
 trash_classes = aluminumCan \
                 + cardboard \
@@ -36,9 +44,8 @@ trash_classes = aluminumCan \
                 + paper \
                 + paperBag \
                 + plasticBag \
-                + plasticBottle \
                 + reject
-
+trash_visibility = aluminumCan_visibility + cardboard_visibility+carton_visibility+glassBottle_visibility+paper_visibility+paperBag_visibility+plasticBag_visibility+reject_visibility
 
 class Simulator_Object:
 
@@ -46,6 +53,7 @@ class Simulator_Object:
         global s_to_ms, timestep
         self.obj_class = obj.split('/')[0]
         self.object = obj
+        self.visibility = trash_visibility[trash_classes.index(obj)]
         self.rot = (rot * math.pi) / 180
         self.height = height
         self.width = width
@@ -240,6 +248,7 @@ class Mouse:
         self.speedy = y
 
 
+<<<<<<< Updated upstream
 j = 0
 k = 0
 m = 0
@@ -285,6 +294,39 @@ for i in range(180000):  # 180000 ms in 3 minutes
                     score -= 1
                     reward -= 1
                     print(f'Trash ID {trash_obj_id} deleted')
+=======
+def policy(policy_n):
+    j = 0
+    k = 0
+    m = 0
+    total_reward = 100
+    reward = 0
+    score = 100
+    fatigue = 0
+    timeout = 0
+    i = 0
+    state = {'trash':trash_objects, 'score':score, 'total_reward':total_reward, 'fatigue':fatigue, 'timeout':timeout, 'reward_t':reward, 'timestep':i}
+    # f = open('MRE-Simulator-Project/rollout.txt', 'w')
+    for i in range(180000):  # 180000 ms in 3 minutes
+        state['timestep'] = i
+        if i % create_interval == 0:
+            makeRandomTrash(1)
+            makeRandomTrash(2)
+            makeRandomTrash(3)
+            j += 1
+
+        if i % (timestep * s_to_ms) == 0:
+            reward = 0
+            k += 1
+            deletecalled = False
+            for trash_obj_id, trash_obj in trash_objects.items():
+
+                if trash_obj.x > cnvwidth:
+
+                    if trash_obj.obj_class == 'reject' and not trash_obj.deleted:
+                        reward -= 1
+                        score -= 1
+>>>>>>> Stashed changes
                     trash_obj.deleted = True
 
                 elif trash_obj in trash_bin and trash_obj.obj_class == 'reject':
@@ -317,8 +359,86 @@ for i in range(180000):  # 180000 ms in 3 minutes
         else:
             f.write(" none\n\n")
 
+<<<<<<< Updated upstream
 print(f"Score: {score}\nTotal Rejects: {totalRejects}"
       f"\nTimes Objects Were Created: {j}"
       f"\nTimestep total: {k}"
       f"\nTimes Policy Called: {m}"
       f"\nReward: {reward}")
+=======
+                    else:
+                        if 300 > trash_obj.hitbox['y'] > 200:
+                            trash_obj.setSpeed(belt1.belt_speed)
+                        elif 500 > trash_obj.hitbox['y'] > 400:
+                            trash_obj.setSpeed(belt2.belt_speed)
+                        elif 700 > trash_obj.hitbox['y'] > 600:
+                            trash_obj.setSpeed(belt3.belt_speed)
+                        else:
+                            trash_obj.setSpeed(0)
+                        # print(f"TrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+                        # f.write(f"\nTrashID: {trash_obj_id}  State: {trash_obj.get_state()}")
+                        trash_obj.update_position()
+            total_reward += reward
+
+            # print(f"Score: {score}\nTotal Rejects: {totalRejects}"
+            #       f"\nTimestep: {k}"
+            #       f"\nReward: {reward}\n")
+            # f.write('\n------------------------------------------')
+            # f.write(f"\nTimestep: {k}"
+            #         f"\nScore: {score}"
+            #         f"\nReward: {reward:.1f}"
+            #         f"\nAction Taken:")
+            # if deletecalled:
+            #     f.write(" Dispose non-recyclable from middle\n\n")
+            # else:
+            #     f.write(" none\n\n")
+
+    # print(f"Score: {score}\nTotal Rejects: {totalRejects}"
+    #       f"\nTimes Objects Were Created: {j}"
+    #       f"\nTimestep total: {k}"
+    #       f"\nTimes Policy Called: {m}"
+    #       f"\nTotal Reward: {total_reward:.1f}")
+    # f.write(f"\n\n-----Final Stats-----\nScore: {score}\nTotal Rejects: {totalRejects}"
+    #         f"\nTimes Objects Were Created: {j}"
+    #         f"\nTimestep total: {k}"
+    #         f"\nTimes Policy Called: {m}"
+    #         f"\nTotal Reward: {total_reward:.1f}")
+
+    return score, total_reward, fatigue, ybelt_fatigue_tout
+
+
+
+
+def average_policy(policy_n, n):
+    avg_score = 0
+    avg_reward = 0
+    avg_fatigue = 0
+    for i in range(n):
+        if policy_n == 1:
+            curr_score, curr_reward, curr_fatigue, ybelt_fatigue_tout = policy(1)
+        elif policy_n == 2:
+            curr_score, curr_reward, curr_fatigue, ybelt_fatigue_tout = policy(2)
+        elif policy_n == 3:
+            curr_score, curr_reward, curr_fatigue, ybelt_fatigue_tout = policy(3)
+        elif policy_n == 0:
+            curr_score, curr_reward, curr_fatigue, ybelt_fatigue_tout = policy(0)
+        avg_score += curr_score
+        avg_reward += curr_reward
+        avg_fatigue += curr_fatigue
+        print(policy_n, f"{int((i/n)* 100)}%")
+    return avg_score/n, avg_reward/n, avg_fatigue/n, ybelt_fatigue_tout
+
+policies = {0:'Do nothing', 1:'Drag Non-Recyclable from the middle', 2:"Drag Recyclable from the middle", 3:"Drag all items from middle"}
+avgtext = open("averages.txt", 'w')
+for a_policy, description in policies.items():
+    n_score, n_reward, n_fatigue, ybelt_fatigue_tout = average_policy(a_policy, 2)
+    avgtext.write(f"\nPolicy: {policies[a_policy]}"
+                  f"\nAverage Score: {n_score}"
+                  f"\nFatigue: {n_fatigue}\n")
+                  # f"\nAverage Reward: {n_reward}\n")
+avgtext.write(f"\nBelt      Fatigue     Timeout(ms)\n")
+p = 1
+for belt, fatigue_timeout in ybelt_fatigue_tout.items():
+    avgtext.write(f"{p}         {fatigue_timeout[0]}         {fatigue_timeout[1]}\n")
+    p += 1
+>>>>>>> Stashed changes
