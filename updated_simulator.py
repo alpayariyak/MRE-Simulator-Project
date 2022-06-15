@@ -1,6 +1,7 @@
 import math
 import random
 import copy
+import numpy as np
 
 #
 game_length = 180
@@ -320,7 +321,7 @@ def transition(state, action=False):
     return new_state
 
 
-def policy(state, policy_n=0):
+def policy(state, X_t, a_theta, policy_n=0):
     action = False
     deletecalled = False
     ybelts = [650, 450, 250]
@@ -343,43 +344,95 @@ def policy(state, policy_n=0):
                     action = trash_obj
         elif policy_n == 4:
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
-                                                     650) and trash_obj.obj_class == 'reject' and not deletecalled:
+                                                     450) and trash_obj.obj_class == 'reject' and not deletecalled:
+                action = trash_obj
+        elif policy_n == 5:
+            if probability(sigmoid_function(a_theta.T.dot(X_t))) and trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and not deletecalled:
                 action = trash_obj
     return action
 
 
 if __name__ == '__main__':
-    total_reward = 100
-    reward = 0
-    score = 100
-    fatigue = 0
-    timeout = 0
-    i = 0
-    state = {'trash_objects': trash_objects, 'score': score, 'fatigue': fatigue,
-             'timeout': timeout, 'timestep': i}
-    new_state = state
 
-    for i in range(180000):  # 180000 ms in 3 minutes
-        
-        state['timestep'] = i
-        timestep_bool = new_state['timestep'] % (timestep * s_to_ms) == 0
-        old_state = state
-        state = new_state
+    theta = np.random.randn(3, )
 
-        if state['timeout'] > 0:
-            state['timeout'] -= 1
-            action_t = False
-        else:
-            action_t = policy(state, 1)
+    for i in range(10):
 
-        new_state = transition(state, action_t)
+        total_reward = 100
+        reward = 0
+        score = 100
+        fatigue = 0
+        timeout = 0
+        i = 0
+        state = {'trash_objects': trash_objects, 'score': score, 'fatigue': fatigue,
+                 'timeout': timeout, 'timestep': i}
+        new_state = state
 
-        if timestep_bool:
-            reward = reward_function(new_state, action_t)
-            total_reward += reward
-            for trash_id, trash_obj in copy.copy(state['trash_objects']).items():
-                if trash_obj.deleted:
-                    del new_state['trash_objects'][trash_id]
+        statelist = []
+        actionlist = []
 
-    print(new_state['fatigue'], new_state['score'], total_reward)
-    print(new_state)
+        for i in range(180000):  # 180000 ms in 3 minutes
+            simple_state = [0, 0, 1]
+            for trash_id, trash_obj in state['trash_objects'].items():
+                if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
+                                                         450) and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
+                    simple_state[0] = 1
+                if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
+                                                         450) and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
+                    simple_state[1] = 1
+
+            state['timestep'] = i
+            timestep_bool = new_state['timestep'] % (timestep * s_to_ms) == 0
+            old_state = state
+            state = new_state
+
+            if state['timeout'] > 0:
+                state['timeout'] -= 1
+                action_t = False
+                actionlist_var = 0
+            else:
+                action_t = policy(state, 4, simple_state, theta)
+                if action_t:
+                    actionlist_var = 1
+                else:
+                    actionlist_var = 0
+
+            new_state = transition(state, action_t)
+
+            if timestep_bool:
+                actionlist.append(actionlist_var)
+                statelist.append(simple_state)
+                reward = reward_function(new_state, action_t)
+                total_reward += reward
+                for trash_id, trash_obj in copy.copy(state['trash_objects']).items():
+                    if trash_obj.deleted:
+                        del new_state['trash_objects'][trash_id]
+
+        print(total_reward, new_state['score'], theta)
+        theta += gradient_theta
+
+
+
+
+def sigmoid_function(x):
+    return 1 / (1 + np.exp(-x))
+
+
+# a vector theta consisting of 3 elements
+# statelist = [[0, 0, 1], [0, 1, 1], [1, 1, 1], [0, 0, 1]]
+# actionlist = [0, 1, 1, 0]
+# totalReward = 96
+
+def baseline(statelist, actionlist, total_reward, theta):
+    list_b = np.zeros((len(theta),))
+    for k in range(theta.shape[0]):
+        theta_k = theta[k]
+        x_k = [a_state[k] for a_state in statelist]
+        sum_grad_thetak_log_policy_k = 0
+        for i in range(len(statelist)):
+            sum_grad_thetak_log_policy_k += (1 + np.exp(-(theta.T.dot(statelist[i]))) * (-x_k[i]))
+        list_b[k] = (np.square(sum_grad_thetak_log_policy_k) * total_reward) / np.square(sum_grad_thetak_log_policy_k)
+    return list_b
+
+
+print(baseline(statelist, actionlist, total_reward, theta))
