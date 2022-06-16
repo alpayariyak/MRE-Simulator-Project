@@ -354,8 +354,10 @@ def policy(state, X_t, a_theta, policy_n=0):
 
 
 def simulator(input_theta, pol=5):
+    global trash_id
     trash_id = 0
-    trash_objects = {}  # id:object
+    global trash_objects
+    trash_objects = {}# id:object
     total_reward = 100
     reward = 0
     score = 100
@@ -391,9 +393,9 @@ def simulator(input_theta, pol=5):
             A_t = 0
             if timestep_bool:
                 timeouts.append(True)
-        elif timestep_bool:
+        elif state['timeout'] == 0 and timestep_bool:
             timeouts.append(False)
-            action_t = policy(state, X_t, theta, 5)
+            action_t = policy(state, X_t, input_theta, 5)
             if action_t:
                 A_t = 1
             else:
@@ -417,14 +419,7 @@ def sigmoid_function(x):
     return 1 / (1 + np.exp(-x))
 
 
-theta = np.random.randn(3, )
-# a vector theta consisting of 3 elements
-X = [[0, 0, 1], [0, 1, 1], [1, 1, 1], [0, 0, 1]]
-A = [0, 1, 1, 0]
-total_reward = 96
-
-
-def baseline(X, A, total_reward, theta, baselines, epochs):
+def baseline(X, A, total_reward, theta, baselines, minibatch_n):
     b = np.zeros((len(theta),))
     for k in range(theta.shape[0]):
         theta_k = theta[k]
@@ -434,15 +429,15 @@ def baseline(X, A, total_reward, theta, baselines, epochs):
         for i in range(len(X)):
             sum_grad_thetak_log_policy_k += (1 - sigmoid_function(theta.T.dot(X[i]))) * (x_k[i])
 
-        numerator = ((np.square(sum_grad_thetak_log_policy_k) * total_reward + baselines['sum_num'][k]) / epochs)
-        denominator = (np.square(sum_grad_thetak_log_policy_k) + baselines['sum_denom'][k] / epochs)
+        numerator = ((np.square(sum_grad_thetak_log_policy_k) * total_reward + baselines['sum_num'][k]) / minibatch_n)
+        denominator = (np.square(sum_grad_thetak_log_policy_k) + baselines['sum_denom'][k] / minibatch_n)
         baselines['sum_num'][k] += numerator
         baselines['sum_denom'][k] += denominator
         b[k] = numerator / denominator
     return b, baselines
 
 
-def grad_theta(X, A, total_reward, theta, b, grad_sum, epochs):
+def grad_theta(X, A, total_reward, theta, b, grad_sum, minibatch_n):
     gradient = np.zeros((len(theta),))
     for k in range(theta.shape[0]):
         theta_k = theta[k]
@@ -450,9 +445,8 @@ def grad_theta(X, A, total_reward, theta, b, grad_sum, epochs):
         sum_grad_thetak_log_policy_k = 0
         for i in range(len(X)):
             sum_grad_thetak_log_policy_k += (1 - sigmoid_function(theta.T.dot(X[i]))) * (x_k[i])
-        gradient[k] = sum_grad_thetak_log_policy_k * (total_reward-b[k]) + grad_sum[k] / epochs
-    return gradient, grad_sum+gradient
-
+        gradient[k] = (sum_grad_thetak_log_policy_k * (total_reward - b[k]) + grad_sum[k]) / minibatch_n
+    return gradient, grad_sum + gradient
 
 
 def train(epochs, minibatches, epsilon):
@@ -462,31 +456,36 @@ def train(epochs, minibatches, epsilon):
         baseline_sums = {'sum_num': [0, 0, 0], 'sum_denom': [0, 0, 0]}
         grad_sum = [0, 0, 0]
         current_grads = []
-        for minibatch in range(1, minibatches+1):
+        for minibatch in range(1, minibatches + 1):
             A, X, total_reward, timeouts = simulator(theta)
             b, baseline_sums = baseline(X, A, total_reward, theta, baseline_sums, minibatch)
             grad, grad_sum = grad_theta(X, A, total_reward, theta, b, grad_sum, minibatch)
             current_grads.append(grad)
-        epoch_avg_grad = np.average(current_grads)
-        theta += epsilon*epoch_avg_grad
-        print(score_difference_in_reward(theta, 3))
+        epoch_avg_grad = np.average(current_grads, axis=0)
+        theta += epsilon * epoch_avg_grad
+        print(score_difference_in_reward(theta, 3), epoch_avg_grad, theta)
     return theta
 
 
 def score_difference_in_reward(theta, folds, pol=4):
-
-    #A, X, total_reward = simulator(theta, pol)
-    metric = 0
+    metrics = []
     for fold in range(folds):
-        A_train, X_train, total_reward_train, timeouts = simulator(theta)
-        for t in range(len(A_train)):
-            if X_train[t][0] == 1 and A_train[t] == 1:
-                metric -= 1
-            elif X_train[t][1] == 1 and A_train[t] == 0 and not timeouts[t]:
-                metric -= 1
+        metrics.append(metric_function(theta, folds))
+    return np.average(metrics)
 
-    return metric/folds
+
+def metric_function(theta, folds, pol=4):
+    metric = 0
+    A_train, X_train, total_reward_train, timeouts = simulator(theta)
+    for t in range(len(A_train)):
+        if X_train[t][0] == 1 and A_train[t] == 1:
+            metric -= 1
+        elif X_train[t][1] == 1 and A_train[t] == 0 and not timeouts[t]:
+            metric -= 1
+        elif X_train[t][1] == 0 and  X_train[t][0] == 0 and A_train[t] == 1 and not timeouts[t]:
+            metric -= 1
+    return metric
 
 
 if __name__ == '__main__':
-    train(10, 8, 0.5)
+    train(5, 15, 0.3)
