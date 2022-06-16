@@ -6,7 +6,7 @@ import numpy as np
 #
 game_length = 180
 s_to_ms = 1000
-timestep = 0.1
+timestep = 1
 create_interval = 0.5 * s_to_ms  # 5 seconds
 fatigue_constant = 0.0000018
 timeout_constant = 0.4
@@ -347,92 +347,146 @@ def policy(state, X_t, a_theta, policy_n=0):
                                                      450) and trash_obj.obj_class == 'reject' and not deletecalled:
                 action = trash_obj
         elif policy_n == 5:
-            if probability(sigmoid_function(a_theta.T.dot(X_t))) and trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and not deletecalled:
+            if probability(sigmoid_function(a_theta.T.dot(X_t))) and trash_obj.checkCoordinateIntersection(cnvwidth / 2,
+                                                                                                           450) and not deletecalled:
                 action = trash_obj
     return action
 
 
-if __name__ == '__main__':
+def simulator(input_theta, pol=5):
+    trash_id = 0
+    trash_objects = {}  # id:object
+    total_reward = 100
+    reward = 0
+    score = 100
+    fatigue = 0
+    timeout = 0
+    i = 0
+    state = {'trash_objects': trash_objects, 'score': score, 'fatigue': fatigue,
+             'timeout': timeout, 'timestep': i}
+    new_state = state
 
-    theta = np.random.randn(3, )
+    X = []
+    A = []
+    timeouts = []
 
-    for i in range(10):
+    for i in range(180000):  # 180000 ms in 3 minutes
+        X_t = [0, 0, 1]
+        for trash_id, trash_obj in state['trash_objects'].items():
+            if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
+                                                     450) and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
+                X_t[0] = 1
+            if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
+                                                     450) and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
+                X_t[1] = 1
 
-        total_reward = 100
-        reward = 0
-        score = 100
-        fatigue = 0
-        timeout = 0
-        i = 0
-        state = {'trash_objects': trash_objects, 'score': score, 'fatigue': fatigue,
-                 'timeout': timeout, 'timestep': i}
-        new_state = state
+        state['timestep'] = i
+        timestep_bool = new_state['timestep'] % (timestep * s_to_ms) == 0
+        old_state = state
+        state = new_state
 
-        statelist = []
-        actionlist = []
-
-        for i in range(180000):  # 180000 ms in 3 minutes
-            simple_state = [0, 0, 1]
-            for trash_id, trash_obj in state['trash_objects'].items():
-                if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
-                                                         450) and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
-                    simple_state[0] = 1
-                if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
-                                                         450) and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
-                    simple_state[1] = 1
-
-            state['timestep'] = i
-            timestep_bool = new_state['timestep'] % (timestep * s_to_ms) == 0
-            old_state = state
-            state = new_state
-
-            if state['timeout'] > 0:
-                state['timeout'] -= 1
-                action_t = False
-                actionlist_var = 0
-            else:
-                action_t = policy(state, 4, simple_state, theta)
-                if action_t:
-                    actionlist_var = 1
-                else:
-                    actionlist_var = 0
-
-            new_state = transition(state, action_t)
-
+        if state['timeout'] > 0:
+            state['timeout'] -= 1
+            action_t = False
+            A_t = 0
             if timestep_bool:
-                actionlist.append(actionlist_var)
-                statelist.append(simple_state)
-                reward = reward_function(new_state, action_t)
-                total_reward += reward
-                for trash_id, trash_obj in copy.copy(state['trash_objects']).items():
-                    if trash_obj.deleted:
-                        del new_state['trash_objects'][trash_id]
+                timeouts.append(True)
+        elif timestep_bool:
+            timeouts.append(False)
+            action_t = policy(state, X_t, theta, 5)
+            if action_t:
+                A_t = 1
+            else:
+                A_t = 0
 
-        print(total_reward, new_state['score'], theta)
-        theta += gradient_theta
+        new_state = transition(state, action_t)
 
+        if timestep_bool:
+            A.append(A_t)
+            X.append(X_t)
+            reward = reward_function(new_state, action_t)
+            total_reward += reward
+            for trash_id, trash_obj in copy.copy(state['trash_objects']).items():
+                if trash_obj.deleted:
+                    del new_state['trash_objects'][trash_id]
 
+    return A, X, total_reward, timeouts
 
 
 def sigmoid_function(x):
     return 1 / (1 + np.exp(-x))
 
 
+theta = np.random.randn(3, )
 # a vector theta consisting of 3 elements
-# statelist = [[0, 0, 1], [0, 1, 1], [1, 1, 1], [0, 0, 1]]
-# actionlist = [0, 1, 1, 0]
-# totalReward = 96
+X = [[0, 0, 1], [0, 1, 1], [1, 1, 1], [0, 0, 1]]
+A = [0, 1, 1, 0]
+total_reward = 96
 
-def baseline(statelist, actionlist, total_reward, theta):
-    list_b = np.zeros((len(theta),))
+
+def baseline(X, A, total_reward, theta, baselines, epochs):
+    b = np.zeros((len(theta),))
     for k in range(theta.shape[0]):
         theta_k = theta[k]
-        x_k = [a_state[k] for a_state in statelist]
+        x_k = [a_state[k] for a_state in X]
         sum_grad_thetak_log_policy_k = 0
-        for i in range(len(statelist)):
-            sum_grad_thetak_log_policy_k += (1 + np.exp(-(theta.T.dot(statelist[i]))) * (-x_k[i]))
-        list_b[k] = (np.square(sum_grad_thetak_log_policy_k) * total_reward) / np.square(sum_grad_thetak_log_policy_k)
-    return list_b
+
+        for i in range(len(X)):
+            sum_grad_thetak_log_policy_k += (1 - sigmoid_function(theta.T.dot(X[i]))) * (x_k[i])
+
+        numerator = ((np.square(sum_grad_thetak_log_policy_k) * total_reward + baselines['sum_num'][k]) / epochs)
+        denominator = (np.square(sum_grad_thetak_log_policy_k) + baselines['sum_denom'][k] / epochs)
+        baselines['sum_num'][k] += numerator
+        baselines['sum_denom'][k] += denominator
+        b[k] = numerator / denominator
+    return b, baselines
 
 
-print(baseline(statelist, actionlist, total_reward, theta))
+def grad_theta(X, A, total_reward, theta, b, grad_sum, epochs):
+    gradient = np.zeros((len(theta),))
+    for k in range(theta.shape[0]):
+        theta_k = theta[k]
+        x_k = [a_state[k] for a_state in X]
+        sum_grad_thetak_log_policy_k = 0
+        for i in range(len(X)):
+            sum_grad_thetak_log_policy_k += (1 - sigmoid_function(theta.T.dot(X[i]))) * (x_k[i])
+        gradient[k] = sum_grad_thetak_log_policy_k * (total_reward-b[k]) + grad_sum[k] / epochs
+    return gradient, grad_sum+gradient
+
+
+
+def train(epochs, minibatches, epsilon):
+    theta = np.random.randn(3, )
+    print(score_difference_in_reward(theta, 3))
+    for epoch in range(epochs):
+        baseline_sums = {'sum_num': [0, 0, 0], 'sum_denom': [0, 0, 0]}
+        grad_sum = [0, 0, 0]
+        current_grads = []
+        for minibatch in range(1, minibatches+1):
+            A, X, total_reward, timeouts = simulator(theta)
+            b, baseline_sums = baseline(X, A, total_reward, theta, baseline_sums, minibatch)
+            grad, grad_sum = grad_theta(X, A, total_reward, theta, b, grad_sum, minibatch)
+            current_grads.append(grad)
+        epoch_avg_grad = np.average(current_grads)
+        theta += epsilon*epoch_avg_grad
+        print(score_difference_in_reward(theta, 3))
+    return theta
+
+
+def score_difference_in_reward(theta, folds, pol=4):
+
+    #A, X, total_reward = simulator(theta, pol)
+    metric = 0
+    for fold in range(folds):
+        A_train, X_train, total_reward_train, timeouts = simulator(theta)
+        for t in range(len(A_train)):
+            if X_train[t][0] == 1 and A_train[t] == 1:
+                metric -= 1
+            elif X_train[t][1] == 1 and A_train[t] == 0 and not timeouts[t]:
+                metric -= 1
+
+    return metric/folds
+
+
+if __name__ == '__main__':
+    train(10, 8, 0.5)
