@@ -26,7 +26,6 @@ def simulator(input_theta, input_policy):
         reward = reward_function(state, a_t)
         total_reward += reward
         state = transition(state, a_t)
-        state['t'] = i
         X_t = simple_state(state, X)
         a_t = action_function(state, X_t, A, input_theta, input_policy)
         clean_up(state)

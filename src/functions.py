@@ -219,5 +219,6 @@ def transition(state, a_t):
             else:
 
                 to_delete.append(trash_obj_id)
+    state['t'] += 1
 
     return new_state
