@@ -250,8 +250,10 @@ def reward_function(state, action):
     for trash_id, trash_obj in state['trash_objects'].items():
         if trash_obj.x > cnvwidth and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
             reward += -1
-        elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' or action != False and action.obj_class != 'reject':
+        elif trash_obj in trash_bin and trash_obj.obj_class != 'reject':
             reward += -1
+    if action and action.obj_class != 'reject':
+        reward += -1
     return reward
 
 
@@ -272,7 +274,7 @@ def timeout_function(action):
         t = 0.15 * dist + 752.35
     if action.speedx == belt3.belt_speed:  # belt 3
         t = 0.08 * dist + 1140.88
-    return int(t)
+    return int(math.ceil((t/s_to_ms)/timestep))
 
 
 def transition(state, action=False):
@@ -381,5 +383,111 @@ if __name__ == '__main__':
                 if trash_obj.deleted:
                     del new_state['trash_objects'][trash_id]
 
+<<<<<<< Updated upstream
     print(new_state['fatigue'], new_state['score'], total_reward)
     print(new_state)
+=======
+    return A, X, total_reward, timeouts
+
+
+def sigmoid_function(x):
+    return 1 / (1 + np.exp(-x))
+
+
+
+def baseline(X_T, total_reward_T, theta):
+    b = np.zeros((len(theta),))
+    for k in range(theta.shape[0]):
+        theta_k = theta[k]
+        numerator_sum = 0
+        denomenator_sum = 0
+        i = 1
+
+        for X in X_T:
+            sum_grad_thetak_log_policy_k_run = 0
+            for x_t in X:
+                x_k_t = x_t[k]
+                sum_grad_thetak_log_policy_k_run += (1 - sigmoid_function(theta.T.dot(x_t))) * x_k_t
+                #print(f"{k}         {i}         {(1 - sigmoid_function(theta.T.dot(x_t))) * x_k_t}")
+            numerator_sum += np.square(sum_grad_thetak_log_policy_k_run) * total_reward_T[i-1]
+            denomenator_sum += np.square(sum_grad_thetak_log_policy_k_run)
+            i += 1
+        b[k] = (numerator_sum/i) / (denomenator_sum/i)
+
+    return b
+
+
+def grad_theta(X_T, total_reward_T, theta, b):
+    gradient = np.zeros((len(theta),))
+    for k in range(theta.shape[0]):
+        theta_k = theta[k]
+        grad_sum = 0
+        i = 1
+        for X in X_T:
+            sum_grad_thetak_log_policy_k_run = 0
+            for x_t in X:
+                x_k_t = x_t[k]
+                sum_grad_thetak_log_policy_k_run += (1 - sigmoid_function(theta.T.dot(x_t))) * x_k_t
+
+            grad_sum += np.square(sum_grad_thetak_log_policy_k_run) * total_reward_T[i - 1]
+
+        gradient[k] = (sum_grad_thetak_log_policy_k_run * (total_reward_T[i - 1] - b[k])) / len(X_T)
+    return gradient
+
+
+def train(epochs, minibatches, epsilon):
+    theta = np.random.randn(3, )
+    print(score_difference_in_reward(theta, 3))
+    for epoch in range(epochs):
+
+        A_T, X_T, total_reward_T, timeouts_T = [], [], [], []
+
+        for minibatch in range(1, minibatches + 1):
+            total_reward = 100
+            A, X, total_reward, timeouts = simulator(theta)
+            A_T.append(A), X_T.append(X), total_reward_T.append(total_reward), timeouts_T.append(timeouts)
+
+        b = baseline(X_T, total_reward_T, theta)
+        gradient = grad_theta(X_T, total_reward_T, theta, b)
+        theta += epsilon * gradient
+        print(score_difference_in_reward(theta, 3), theta)
+    return theta
+
+
+def score_difference_in_reward(theta, folds, pol=4):
+    metrics = []
+    for fold in range(folds):
+        metrics.append(metric_function(theta, folds))
+    return np.average(metrics)
+
+
+def metric_function(theta, folds, pol=4):
+    metric = 0
+    A_train, X_train, total_reward_train, timeouts = simulator(theta, 1)
+    for t in range(len(A_train)):
+        if X_train[t][0] == 1 and A_train[t] == 1:
+            metric -= 1
+        elif X_train[t][1] == 1 and A_train[t] == 0 and not timeouts[t]:
+            metric -= 1
+        elif X_train[t][1] == 0 and  X_train[t][0] == 0 and A_train[t] == 1 and not timeouts[t]:
+            metric -= 1
+    return metric
+
+
+if __name__ == '__main__':
+    train(4, 10, 0.6)
+    X_T = [ [[0,0,1], [0,1,1], [1,0,1], [1,1,1]],
+            [[0,0,1], [0,0,1], [1,0,1], [1,0,1]],
+            [[1,0,1], [0,0,1], [0,0,1], [0,0,1]]]
+
+    A_T = [ [0, 1, 0, 1],
+            [1, 0, 0, 1],
+            [1, 1, 0, 1] ]
+
+    arewardlist = [-2, -1, 4]
+    atheta = np.random.randn(3, )
+
+    #print(f"k         run            grad_theta_k log pi(u_k | x_k)")
+    b = baseline(X_T, arewardlist, atheta)
+    print(grad_theta(X_T, arewardlist, atheta, b))
+>>>>>>> Stashed changes

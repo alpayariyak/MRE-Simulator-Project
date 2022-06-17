@@ -3,7 +3,6 @@ from random import choice, randint, random
 from numpy import exp
 from math import sqrt, ceil
 
-
 from copy import copy
 
 
@@ -27,6 +26,7 @@ def get_dist_from_trash(x, y):
 
 from classes import Trash_Object, Belt
 from assets import trash_classes, belts, trash_bin, speed_probability, visibility_probability
+
 
 def makeRandomTrash(beltNumber):
     from global_ import trash_id, trash_objects
@@ -82,9 +82,13 @@ def timeout_bool(state):
     return state['timeout'] > 0
 
 
-def clean_up(trash_id_list, state):
-    for trash_id in trash_id_list:
-        del state['trash_objects'][trash_id]
+def clean_up(state):
+    from global_ import to_delete
+    if to_delete:
+        for i in range(len(to_delete)):
+            trash_id = to_delete.pop()
+            del state['trash_objects'][trash_id]
+
 
 
 # RL Environment
@@ -97,7 +101,7 @@ def reward_function(state, action):
 
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
-        if action and action.obj_class != 'reject':
+        if action != False and action.obj_class != 'reject':
             reward += -1
         return reward
     elif state['t'] == 0:
@@ -135,6 +139,7 @@ def simple_state(state, X):
         X.append(X_t)
         return X_t
     pass
+
 
 def action_function(state, X_t, A, input_theta, input_policy):
     if timeout_bool(state):
@@ -189,8 +194,6 @@ def transition(state, a_t):
         makeRandomTrash(2)
         makeRandomTrash(3)
 
-    new_state['t'] += 1
-
     if timestep_bool(new_state):
         to_delete = []
         to_delete_bool = False
@@ -202,6 +205,7 @@ def transition(state, a_t):
             new_state['fatigue'] += fatigue_function(a_t)
             new_state['timeout'] += timeout_function(a_t)
 
+        from global_ import to_delete
         for trash_obj_id, trash_obj in new_state['trash_objects'].items():
             if trash_obj.x > cnvwidth:
                 if (trash_obj.obj_class == 'reject' and not trash_obj.deleted) \
@@ -213,8 +217,7 @@ def transition(state, a_t):
                 auto_speed(trash_obj)
                 trash_obj.update_position()
             else:
+
                 to_delete.append(trash_obj_id)
-                to_delete_bool = True
-        if to_delete_bool:
-            clean_up(to_delete, state)
+
     return new_state

@@ -1,7 +1,3 @@
-import math
-import random
-
-#
 
 game_length = 180
 s_to_ms = 1000
@@ -26,7 +22,6 @@ def simulator(input_theta, input_policy):
     X = []
     A = []
 
-
     for i in range(180 * s_to_ms):
         reward = reward_function(state, a_t)
         total_reward += reward
@@ -34,5 +29,7 @@ def simulator(input_theta, input_policy):
         state['t'] = i
         X_t = simple_state(state, X)
         a_t = action_function(state, X_t, A, input_theta, input_policy)
+        clean_up(state)
+
     from global_ import total_rejects
-    print(state['score'], total_reward, total_rejects, state)
+    print(state['score'], total_reward, total_rejects, len(state['trash_objects']))
