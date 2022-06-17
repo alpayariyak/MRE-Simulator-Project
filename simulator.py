@@ -1,94 +1,7 @@
-import math
-import random
-
-#
-game_length = 180
-s_to_ms = 1000
-timestep = 0.1
-create_interval = 0.5 * s_to_ms  # 5 seconds
-#
-
-# page height, easier to reference js code
-
-cnvheight = 1230  # or 800
-cnvwidth = 3024
-
-#
-totalObjects = -11
-totalRejects = 0
-trash_id = 0
-#
-
-aluminumCan = [f'aluminumCan/can{i}.png' for i in range(10)]
-cardboard = [f'cardboard/cardboard{i}.png' for i in range(10)]
-carton = [f'carton/carton{i}.png' for i in range(10)]
-glassBottle = [f'glassBottle/glassBottle{i}.png' for i in range(9)]
-paper = [f'paper/paper{i}.png' for i in range(21)]
-paperBag = [f'paperBag/paperBag{i}.png' for i in range(15)]
-plasticBag = [f'plasticBag/plasticBag{i}.png' for i in range(23)]
-plasticBottle = [f'plasticBottle/plasticBottle{i}.png' for i in range(12)]
-reject = [f'reject/reject{i}.png' for i in range(20)]
-
-trash_classes = aluminumCan \
-                + cardboard \
-                + carton \
-                + glassBottle \
-                + paper \
-                + paperBag \
-                + plasticBag \
-                + plasticBottle \
-                + reject
 
 
-class Simulator_Object:
 
-    def __init__(self, obj, x, y, speedx=0, speedy=0, rot=0, width=100, height=100):
-        global s_to_ms, timestep
-        self.obj_class = obj.split('/')[0]
-        self.object = obj
-        self.rot = (rot * math.pi) / 180
-        self.height = height
-        self.width = width
-        self.speedx = speedx
-        self.speedy = speedy
-        self.x = x
-        self.y = int(y)
-        self.hitbox = {"x": int(x + width / 2), "y": int(y + height / 2), "radius": 50}
 
-        global totalObjects
-        global totalRejects
-        totalObjects += 1
-
-    def get_state(self):
-        return [self.x, self.y, self.speedx, self.speedy]
-
-    def __contains__(self, item):
-
-        xcenter_self, ycenter_self, radius = self.hitbox["x"], self.hitbox["y"], self.hitbox["radius"]
-
-        if type(item) is Simulator_Object or Trash_Object:
-            xcenter_item, ycenter_item = item.hitbox["x"], item.hitbox["y"]
-
-            if self.x + self.width > xcenter_item > self.x and self.y + self.height > ycenter_item > self.y:
-                return True
-            else:
-                return False
-
-    def checkCoordinateIntersection(self, x, y):
-        xcenter_self, ycenter_self, radius = self.hitbox["x"], self.hitbox["y"], self.hitbox["radius"]
-
-        dist = math.sqrt(
-            math.pow(abs(xcenter_self - x), 2) + math.pow(abs(ycenter_self - y), 2)
-        )
-
-        if dist < radius:
-            return True
-        else:
-            return False
-
-    def setSpeed(self, speed_X, speedy_y=0):
-        self.speedx = speed_X
-        self.speedy_y = speedy_y
 
 
 class Belt(Simulator_Object):
@@ -190,37 +103,7 @@ class Trash_Object(Simulator_Object):
         self.speedy = 0
 
 
-def makeRandomTrash(beltNumber):
-    if beltNumber == 1:
-        globals()[f'trash_object_{trash_id}'] = Trash_Object(
-            random.choice(trash_classes),
-            -100 - random.randint(0, 150),
-            200,
-            speedx=belt1.belt_speed,
-            speedy=0,
-            rot=random.randint(-90, 90)
-        )
-        trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
-    elif beltNumber == 2:
-        globals()[f'trash_object_{trash_id}'] = Trash_Object(
-            random.choice(trash_classes),
-            -100 - random.randint(0, 150),
-            400,
-            speedx=belt2.belt_speed,
-            speedy=0,
-            rot=random.randint(-90, 90)
-        )
-        trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
-    else:
-        globals()[f'trash_object_{trash_id}'] = Trash_Object(
-            random.choice(trash_classes),
-            -100 - random.randint(0, 150),
-            600,
-            speedx=belt3.belt_speed,
-            speedy=0,
-            rot=random.randint(-90, 90)
-        )
-        trash_objects[trash_id] = globals()[f'trash_object_{trash_id}']
+
 
 
 # makeRandomTrash(1)
