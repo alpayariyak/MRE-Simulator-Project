@@ -29,6 +29,4 @@ def simulator(input_theta, input_policy):
         X_t = simple_state(state, X)
         a_t = action_function(state, X_t, A, input_theta, input_policy)
         clean_up(state)
-
-    from global_ import total_rejects
-    print(state['score'], total_reward, total_rejects, len(state['trash_objects']))
+    return A, X, total_reward

@@ -142,15 +142,19 @@ def simple_state(state, X):
 
 
 def action_function(state, X_t, A, input_theta, input_policy):
+    tstep_bool =  timestep_bool(state)
     if timeout_bool(state):
         a_t = False
-        A.append(0)
         state['timeout'] -= 1
+
+        if tstep_bool:
+            A.append(0)
+
     else:
-        if timestep_bool(state):
+        if tstep_bool:
             a_t = policy(state, input_policy, X_t, input_theta)
             if a_t:
-                A.append(a_t)
+                A.append(1)
             else:
                 A.append(0)
 
@@ -181,8 +185,9 @@ def policy(state, policy_n, X_t, input_theta):
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject':
                 return trash_obj
         elif policy_n == 5:
-            if probability(sigma(input_theta.T.dot(X_t))) and trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450):
-                return trash_obj
+            if probability(sigma(input_theta.T.dot(X_t))):
+                if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450):
+                    return trash_obj
     return action
 
 
