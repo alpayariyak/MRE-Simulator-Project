@@ -165,6 +165,9 @@ def action_function(state, X_t, A, input_theta, input_policy):
 def policy(state, policy_n, X_t, input_theta):
     action = False
     ybelts = [250, 450, 650]
+    if policy_n == 5:
+        if not probability(sigma(input_theta.T.dot(X_t))):
+            return action
     for trash_obj_id, trash_obj in state['trash_objects'].items():
         if policy_n == 0:
             action = False
@@ -184,11 +187,10 @@ def policy(state, policy_n, X_t, input_theta):
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject':
                 return trash_obj
         elif policy_n == 5:
-            if probability(sigma(input_theta.T.dot(X_t))):
-                if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450):
-                    return trash_obj
-                else:
-                    return -1
+            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450):
+                return trash_obj
+            else:
+                return -1
     return action
 
 
