@@ -3,17 +3,21 @@ from functions import sigma
 from sim_v3 import simulator
 
 
-def b_k_function(theta, X_T, total_reward_T, k):
+def b_k_function(theta, X_T, A_T, total_reward_T, k):
     sum_grad_theta_k_log = 0
     numerator_sum = 0
     denomenator_sum = 0
     i = 0
     k_list_sum_grad_theta_k_log = []
-    for X in X_T:
+    for run_n in range(len(X_T)):
+        X = X_T[run_n]
+        A = A_T[run_n]
         i += 1
         sum_grad_theta_k_log = 0
-        for x_t in X:
-            sum_grad_theta_k_log += (1 - sigma(theta.T.dot(x_t))) * x_t[k]
+        for state_h in range(len(X)):
+            x_h = X[state_h]
+            action_h = A[state_h]
+            sum_grad_theta_k_log += (action_h - sigma(theta.T.dot(x_h))) * x_h[k]
         numerator_sum += np.square(sum_grad_theta_k_log) * total_reward_T[i - 1]
         denomenator_sum += np.square(sum_grad_theta_k_log)
         k_list_sum_grad_theta_k_log.append(sum_grad_theta_k_log)
@@ -30,13 +34,13 @@ def g_k_function(list_of_sum_grad_theta_k_log, total_reward_T, theta, b, k):
     return g_k_sum / i
 
 
-def baseline(X_T, total_reward_T, theta):
+def baseline(X_T, A_T, total_reward_T, theta):
 
     b = np.zeros((len(theta),))
     list_of_sum_grad_theta_k_log = []
     for k in range(theta.shape[0]):
 
-        b_k, k_list_of_sum_grad_theta_k_log = b_k_function(theta, X_T, total_reward_T, k)
+        b_k, k_list_of_sum_grad_theta_k_log = b_k_function(theta, X_T, A_T, total_reward_T, k)
         list_of_sum_grad_theta_k_log.append(k_list_of_sum_grad_theta_k_log)
         b[k] = b_k
     return b, list_of_sum_grad_theta_k_log
@@ -60,7 +64,7 @@ def train(epochs, minibatches, epsilon):
             A, X, total_reward = simulator(theta, 5)
             A_T.append(A), X_T.append(X), total_reward_T.append(total_reward)
 
-        b, a_list_of_sum_grad_theta_k_log = baseline(X_T, total_reward_T, theta)
+        b, a_list_of_sum_grad_theta_k_log = baseline(X_T, A_T, total_reward_T, theta)
         gradient = gradient_function(a_list_of_sum_grad_theta_k_log, total_reward_T, theta, b)
         theta += epsilon * gradient
 

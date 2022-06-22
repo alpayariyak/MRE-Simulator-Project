@@ -4,7 +4,7 @@ s_to_ms = 1000
 timestep = 1
 create_interval = 0.5 * s_to_ms  # 5 seconds
 cnvheight, cnvwidth = 1230, 3024  # or 800
-fatigue_constant = 0.0000018
+fatigue_constant = 0.000008
 
 from functions import *
 

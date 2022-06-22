@@ -90,7 +90,6 @@ def clean_up(state):
             del state['trash_objects'][trash_id]
 
 
-
 # RL Environment
 def reward_function(state, action):
     if timestep_bool(state) and not state['t'] == 0:
@@ -101,7 +100,7 @@ def reward_function(state, action):
 
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
-        if action != False and action.obj_class != 'reject':
+        if action and isinstance(action, Trash_Object) and action.obj_class != 'reject' or action == -1:
             reward += -1
         return reward
     elif state['t'] == 0:
@@ -142,7 +141,7 @@ def simple_state(state, X):
 
 
 def action_function(state, X_t, A, input_theta, input_policy):
-    tstep_bool =  timestep_bool(state)
+    tstep_bool = timestep_bool(state)
     if timeout_bool(state):
         a_t = False
         state['timeout'] -= 1
@@ -188,6 +187,8 @@ def policy(state, policy_n, X_t, input_theta):
             if probability(sigma(input_theta.T.dot(X_t))):
                 if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450):
                     return trash_obj
+                else:
+                    return -1
     return action
 
 
@@ -203,12 +204,16 @@ def transition(state, a_t):
         to_delete = []
         to_delete_bool = False
         if a_t:
-            if probability(1 - new_state['fatigue'], speed_probability[a_t.speedx],
-                           visibility_probability[a_t.visibility]):
-                a_t.dragToTrash()
-                a_t.deleted = True
-            new_state['fatigue'] += fatigue_function(a_t)
-            new_state['timeout'] += timeout_function(a_t)
+            if a_t == -1:
+                new_state['fatigue'] += 0.0036
+                new_state['timeout'] += 1
+            else:
+                if probability(1 - new_state['fatigue'], speed_probability[a_t.speedx],
+                               visibility_probability[a_t.visibility]):
+                    a_t.dragToTrash()
+                    a_t.deleted = True
+                new_state['fatigue'] += fatigue_function(a_t)
+                new_state['timeout'] += timeout_function(a_t)
 
         from global_ import to_delete
         for trash_obj_id, trash_obj in new_state['trash_objects'].items():
