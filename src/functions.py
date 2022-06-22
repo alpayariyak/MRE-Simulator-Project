@@ -101,8 +101,6 @@ def reward_function(state, action):
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
 
-        if action and isinstance(action, Trash_Object) and action.obj_class == 'reject':
-            print(1)
         if action and isinstance(action, Trash_Object) and action.obj_class != 'reject' or action == -1:
             reward += -1
         return reward
@@ -168,9 +166,13 @@ def action_function(state, X_t, A, input_theta, input_policy):
 def policy(state, policy_n, X_t, input_theta):
     action = False
     ybelts = [250, 450, 650]
+
     if policy_n == 5:
+        action = -1
         if not probability(sigma(input_theta.T.dot(X_t))):
-            return action
+            action = False
+            return False
+
     for trash_obj_id, trash_obj in state['trash_objects'].items():
         if policy_n == 0:
             action = False
@@ -193,7 +195,7 @@ def policy(state, policy_n, X_t, input_theta):
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450):
                 return trash_obj
             else:
-                return -1
+                action = -1
     return action
 
 
@@ -210,8 +212,8 @@ def transition(state, a_t):
         to_delete_bool = False
         if a_t:
             if a_t == -1:
-                new_state['fatigue'] += 0.0036
-                new_state['timeout'] += 1
+                new_state['fatigue'] += 0.00036
+                new_state['timeout'] += 0
             else:
                 if probability(1 - new_state['fatigue'], speed_probability[a_t.speedx],
                                visibility_probability[a_t.visibility]):
