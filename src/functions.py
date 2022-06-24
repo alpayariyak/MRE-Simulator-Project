@@ -5,6 +5,10 @@ from math import sqrt, ceil
 
 from copy import copy
 
+belt_indexes = {250: [0, 1],
+                450: [2, 3],
+                650: [4, 5]}
+
 
 # Math related
 def probability(*probs):
@@ -126,21 +130,6 @@ def timeout_function(action):
     return int(ceil((t / s_to_ms) / timestep))
 
 
-def simple_state(state, X):
-    if timestep_bool(state):
-        X_t = [0, 0, 1]
-        for a_trash_id, trash_obj in state['trash_objects'].items():
-            if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
-                                                     450) and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
-                X_t[0] = 1
-            if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
-                                                     450) and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
-                X_t[1] = 1
-        X.append(X_t)
-        return X_t
-    pass
-
-
 def action_function(state, X_t, A, input_theta, input_policy):
     tstep_bool = timestep_bool(state)
     if timeout_bool(state):
@@ -196,12 +185,17 @@ def policy(state, policy_n, X_t, input_theta):
                 return trash_obj
             else:
                 action = -1
+        elif policy_n == 6:
+            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
+                    and X_t == [0, 1, 1]:
+                return trash_obj
+
     return action
 
 
-def transition(state, a_t):
+def transition(state, a_t, X):
     new_state = state
-
+    RL_state = [0, 0, 0, 0, 0, 0, 1]
     if new_state['t'] % create_interval == 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
@@ -224,6 +218,7 @@ def transition(state, a_t):
 
         from global_ import to_delete
         for trash_obj_id, trash_obj in new_state['trash_objects'].items():
+
             if trash_obj.x > cnvwidth:
                 if (trash_obj.obj_class == 'reject' and not trash_obj.deleted) \
                         or (trash_obj in trash_bin and trash_obj.obj_class != 'reject'):
@@ -233,9 +228,17 @@ def transition(state, a_t):
             if not trash_obj.deleted:
                 auto_speed(trash_obj)
                 trash_obj.update_position()
-            else:
 
+                for y_belt, indexes in belt_indexes.items():
+                    if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
+                                                             y_belt) and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
+                        RL_state[belt_indexes[y_belt][0]] = 1
+                    if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
+                                                             y_belt) and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
+                        RL_state[belt_indexes[y_belt][1]] = 1
+            else:
                 to_delete.append(trash_obj_id)
+        X.append(RL_state)
     state['t'] += 1
 
     return new_state

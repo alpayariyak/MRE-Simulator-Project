@@ -48,3 +48,6 @@ belts = [belt1, belt2, belt3]
 speed_probability = {belt2.belt_speed: 0.96, belt1.belt_speed: 0.92, belt3.belt_speed: 0.85}
 visibility_probability = {1: 0.85, 2: 0.9, 3: 0.98}
 
+belt_indexes = {250: [0, 1],
+                450: [2, 3],
+                650: [4, 5]}

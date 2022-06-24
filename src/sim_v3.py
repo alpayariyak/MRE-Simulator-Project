@@ -1,7 +1,6 @@
-
 game_length = 180
 s_to_ms = 1000
-timestep = 1
+timestep = 0.5
 create_interval = 0.5 * s_to_ms  # 5 seconds
 cnvheight, cnvwidth = 1230, 3024  # or 800
 fatigue_constant = 0.000008
@@ -25,8 +24,8 @@ def simulator(input_theta, input_policy):
     for i in range(180 * s_to_ms):
         reward = reward_function(state, a_t)
         total_reward += reward
-        state = transition(state, a_t)
-        X_t = simple_state(state, X)
-        a_t = action_function(state, X_t, A, input_theta, input_policy)
+        state = transition(state, a_t, X)
+
+        a_t = action_function(state, X[int(i / s_to_ms)], A, input_theta, input_policy)
         clean_up(state)
     return A, X, total_reward
