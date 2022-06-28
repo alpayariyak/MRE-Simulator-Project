@@ -1,7 +1,9 @@
 from sim_v3 import cnvwidth, s_to_ms, timestep, create_interval, fatigue_constant
 from random import choice, randint, random
-from numpy import exp
+from numpy import exp, argmax, array, cumsum
+from numpy.random import rand
 from math import sqrt, ceil
+from scipy.special import softmax
 
 from copy import copy
 
@@ -130,35 +132,55 @@ def timeout_function(action):
     return int(ceil((t / s_to_ms) / timestep))
 
 
-def action_function(state, X_t, A, input_theta, input_policy):
+def action_function(state, X_t, A, input_theta, input_policy, Yhat_H):
+    belt_action_vector = {200: [1, 0, 0, 0],
+                          400: [0, 1, 0, 0],
+                          600: [0, 0, 1, 0]}
     tstep_bool = timestep_bool(state)
     if timeout_bool(state):
         a_t = False
         state['timeout'] -= 1
 
         if tstep_bool:
-            A.append(0)
+            A.append([0, 0, 0, 1])
 
     else:
         if tstep_bool:
-            a_t = policy(state, input_policy, X_t, input_theta)
-            if a_t:
-                A.append(1)
+            a_t = policy(state, input_policy, X_t, input_theta, Yhat_H)
+            if not a_t:
+                A.append([0, 0, 0, 1])
+            elif isinstance(a_t, int):
+                action_vector = [0, 0, 0, 0]
+                action_vector[a_t + 1] = 1
+                A.append(action_vector)
+
             else:
-                A.append(0)
+                A.append(belt_action_vector[a_t.y])
 
         else:
             a_t = False
     return a_t
 
 
-def policy(state, policy_n, X_t, input_theta):
+def pick_action_index(input_theta, X_t, Yhat_H):
+    action_probailities = softmax(input_theta.T.dot(X_t))
+    Yhat_H.append(action_probailities)
+    cumsum_action_probabilities =  cumsum(action_probailities)
+    random_number = random()
+    for i in range(len(cumsum_action_probabilities)):
+        a_p = cumsum_action_probabilities[i]
+        if random_number < a_p:
+            return i
+
+
+def policy(state, policy_n, X_t, input_theta, Yhat_H):
     action = False
     ybelts = [250, 450, 650]
 
     if policy_n == 5:
         action = -1
-        if not probability(sigma(input_theta.T.dot(X_t))):
+        a_index = pick_action_index(input_theta, X_t, Yhat_H)
+        if a_index == 3:
             action = False
             return False
 
@@ -181,7 +203,7 @@ def policy(state, policy_n, X_t, input_theta):
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject':
                 return trash_obj
         elif policy_n == 5:
-            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450):
+            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelts[a_index]):
                 return trash_obj
             else:
                 action = -1
@@ -189,6 +211,10 @@ def policy(state, policy_n, X_t, input_theta):
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
                     and X_t == [0, 1, 1]:
                 return trash_obj
+        elif policy_n == 7:
+            for ybelt in ybelts:
+                if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt):
+                    return trash_obj
 
     return action
 

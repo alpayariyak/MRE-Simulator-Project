@@ -3,65 +3,43 @@ from functions import sigma
 from sim_v3 import simulator
 
 
-def b_k_function(theta, X_T, A_T, total_reward_T, k):
-    sum_grad_theta_k_log = 0
-    numerator_sum = 0
-    denomenator_sum = 0
-    i = 0
-    k_list_sum_grad_theta_k_log = []
+def baseline(X_T, A_T, total_reward_T, Yhat_T, input_theta):
+    b = np.zeros(input_theta.shape)
+    sum_gradlog_unsquared = []
     for run_n in range(len(X_T)):
-        X = X_T[run_n]
-        A = A_T[run_n]
-        i += 1
-        sum_grad_theta_k_log = 0
-        for state_h in range(len(X)):
-            x_h = X[state_h]
-            action_h = A[state_h]
-            sum_grad_theta_k_log += (action_h - sigma(theta.T.dot(x_h))) * x_h[k]
-        numerator_sum += np.square(sum_grad_theta_k_log) * total_reward_T[i - 1]
-        denomenator_sum += np.square(sum_grad_theta_k_log)
-        k_list_sum_grad_theta_k_log.append(sum_grad_theta_k_log)
+        sum_gradlog_unsquared.append(X_T[run_n].T.dot(A_T[run_n] - Yhat_T[run_n]))
 
-    return (numerator_sum / i) / (denomenator_sum / i), k_list_sum_grad_theta_k_log
+    numerator = 0
+    denominator = 0
+    for run_n in range(len(X_T)):
+        squared = np.square(sum_gradlog_unsquared[run_n])
+        numerator += squared * total_reward_T[run_n]
+        denominator += squared
+
+    return numerator / denominator, sum_gradlog_unsquared
 
 
-def g_k_function(list_of_sum_grad_theta_k_log, total_reward_T, theta, b, k):
-    g_k_sum = 0
-    i = 0
-    for run in range(len(total_reward_T)):
-        i += 1
-        g_k_sum += list_of_sum_grad_theta_k_log[k][run] * (total_reward_T[run] - b[k])
-    return g_k_sum / i
+def gradient_function(sum_gradlog_unsquared, total_reward_T, b):
+    gradient = np.zeros(b.shape)
+
+    for run_n in range(len(total_reward_T)):
+        gradient += sum_gradlog_unsquared[run_n] * (np.full(gradient.shape, total_reward_T[run_n]) - b)
+
+    return gradient/len(total_reward_T)
 
 
-def baseline(X_T, A_T, total_reward_T, theta):
-    b = np.zeros((len(theta),))
-    list_of_sum_grad_theta_k_log = []
-    for k in range(theta.shape[0]):
-        b_k, k_list_of_sum_grad_theta_k_log = b_k_function(theta, X_T, A_T, total_reward_T, k)
-        list_of_sum_grad_theta_k_log.append(k_list_of_sum_grad_theta_k_log)
-        b[k] = b_k
-    return b, list_of_sum_grad_theta_k_log
 
 
-def gradient_function(list_of_sum_grad_theta_k_log, total_reward_T, theta, b):
-    gradient = np.zeros((len(theta),))
-    for k in range(theta.shape[0]):
-        g_k = g_k_function(list_of_sum_grad_theta_k_log, total_reward_T, theta, b, k)
-        gradient[k] = g_k
-    return gradient
 
-
-def train(epochs, minibatches, epsilon, theta=np.random.randn(3, )):
+def train(epochs, minibatches, epsilon, theta=np.random.randn(7,4)):
     for epoch in range(epochs):
-        A_T, X_T, total_reward_T = [], [], []
+        A_T, X_T, total_reward_T, Yhat_T = [], [], [], []
         for minibatch in range(1, minibatches + 1):
-            total_reward = 100
-            A, X, total_reward = simulator(theta, 5)
-            A_T.append(A), X_T.append(X), total_reward_T.append(total_reward)
+            A, X, total_reward, Yhat = simulator(theta, 5)
+            A_T.append(A), X_T.append(X), total_reward_T.append(total_reward), Yhat_T.append(Yhat)
 
-        b, a_list_of_sum_grad_theta_k_log = baseline(X_T, A_T, total_reward_T, theta)
-        gradient = gradient_function(a_list_of_sum_grad_theta_k_log, total_reward_T, theta, b)
+        b, sum_gradlog_unsquared = baseline(X_T, A_T, total_reward_T, Yhat_T, theta)
+        gradient = gradient_function(sum_gradlog_unsquared, total_reward_T, b)
         theta += epsilon * gradient
 
     return theta

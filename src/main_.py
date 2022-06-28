@@ -1,9 +1,10 @@
 from sim_v3 import simulator
 from RL_train_functions import train, train_umbrella, check_wrong_moves, alt_umbrella
-from numpy import array, copy, random
+from RL_train_functions_V2 import baseline, gradient_function
+from numpy import array, random
+from numpy.random import rand
 import time
 
-start_time = time.time()
 # # in_theta = train(10, 20, 0.2)
 # in_theta = array([-100, 100, -50])
 # print(in_theta)
@@ -11,8 +12,6 @@ start_time = time.time()
 # su2 = 0
 # with open('readme.txt', 'w') as f:
 #     f.write(f"{train_umbrella(100, 10, 20)}")
-
-
 
 
 #
@@ -28,11 +27,11 @@ start_time = time.time()
 # print("--- %s seconds ---" % (time.time() - start_time))
 #
 
-
-start_time = time.time()
-
 # alt_umbrella(10, 5, 10, 0.2)
-a, x, r = simulator([0, 0, 0], 1)
+start_time = time.time()
+a, x, r, Yhat_1 = simulator(train(5, 10, 0.3), 5)
 print("--- %s seconds ---" % (time.time() - start_time))
 
+print(r)
+print(a)
 print(x)
