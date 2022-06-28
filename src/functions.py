@@ -97,8 +97,14 @@ def clean_up(state):
 
 
 # RL Environment
-def reward_function(state, action):
+def reward_function(state, action, X):
     if timestep_bool(state) and not state['t'] == 0:
+        non_recyclable_list = [
+            [0, 1, 0, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0, 1],
+            [0, 0, 0, 0, 0, 1, 1]
+        ]
+        X_h = X[int(state['t'] / s_to_ms)]
         reward = 0
         for trash_id_state, trash_obj in state['trash_objects'].items():
             if trash_obj.x > cnvwidth and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
@@ -107,7 +113,7 @@ def reward_function(state, action):
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
 
-        if action and isinstance(action, Trash_Object) and action.obj_class != 'reject' or action == -1:
+        if action and isinstance(action, Trash_Object) and action.obj_class != 'reject' or X_h in non_recyclable_list and action == -1:
             reward += -1
         return reward
     elif state['t'] == 0:
@@ -151,7 +157,7 @@ def action_function(state, X_t, A, input_theta, input_policy, Yhat_H):
                 A.append([0, 0, 0, 1])
             elif isinstance(a_t, int):
                 action_vector = [0, 0, 0, 0]
-                action_vector[a_t + 1] = 1
+                action_vector[a_t] = 1
                 A.append(action_vector)
 
             else:
@@ -171,6 +177,7 @@ def pick_action_index(input_theta, X_t, Yhat_H):
         a_p = cumsum_action_probabilities[i]
         if random_number < a_p:
             return i
+    return -1
 
 
 def policy(state, policy_n, X_t, input_theta, Yhat_H):
@@ -202,11 +209,14 @@ def policy(state, policy_n, X_t, input_theta, Yhat_H):
         elif policy_n == 4:
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject':
                 return trash_obj
+
         elif policy_n == 5:
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelts[a_index]):
                 return trash_obj
             else:
                 action = -1
+
+
         elif policy_n == 6:
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
                     and X_t == [0, 1, 1]:

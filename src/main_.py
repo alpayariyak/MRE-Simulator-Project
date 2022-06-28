@@ -1,8 +1,5 @@
 from sim_v3 import simulator
 from RL_train_functions import train, train_umbrella, check_wrong_moves, alt_umbrella
-from RL_train_functions_V2 import baseline, gradient_function
-from numpy import array, random
-from numpy.random import rand
 import time
 
 # # in_theta = train(10, 20, 0.2)
@@ -29,9 +26,14 @@ import time
 
 # alt_umbrella(10, 5, 10, 0.2)
 start_time = time.time()
-a, x, r, Yhat_1 = simulator(train(5, 10, 0.3), 5)
+trained_theta = train(5, 5, 0.3)
+print('done')
+a, x, r, Yhat_1 = simulator(trained_theta, 5)
+a2, x2, r2, Yhat_2 = simulator(trained_theta, 5)
+a3, x3, r3, Yhat_3 = simulator(trained_theta, 5)
 print("--- %s seconds ---" % (time.time() - start_time))
 
-print(r)
-print(a)
-print(x)
+print(r, r2, r3)
+print(a, a2, a3)
+print(x, x2, x3)
+print(Yhat_1, Yhat_2, Yhat_3)

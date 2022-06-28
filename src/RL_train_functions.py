@@ -25,13 +25,10 @@ def gradient_function(sum_gradlog_unsquared, total_reward_T, b):
     for run_n in range(len(total_reward_T)):
         gradient += sum_gradlog_unsquared[run_n] * (np.full(gradient.shape, total_reward_T[run_n]) - b)
 
-    return gradient/len(total_reward_T)
+    return gradient / len(total_reward_T)
 
 
-
-
-
-def train(epochs, minibatches, epsilon, theta=np.random.randn(7,4)):
+def train(epochs, minibatches, epsilon, theta=np.random.randn(7, 4)):
     for epoch in range(epochs):
         A_T, X_T, total_reward_T, Yhat_T = [], [], [], []
         for minibatch in range(1, minibatches + 1):
@@ -97,7 +94,6 @@ def train_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
 
 
 def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
-
     thetas = [np.random.randn(3, ) for i in range(n)]
 
     initial_rewards = []
@@ -111,7 +107,7 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
 
     for i in range(n):
         in_theta = thetas[i]
-        print('training: ', i* 100/n, '%')
+        print('training: ', i * 100 / n, '%')
         current_theta = train(epochs, minibatches, epsilon, in_theta)
         thetas.append(current_theta)
 

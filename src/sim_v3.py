@@ -23,7 +23,7 @@ def simulator(input_theta, input_policy):
     Yhat_H = []
 
     for i in range(180 * s_to_ms):
-        reward = reward_function(state, a_t)
+        reward = reward_function(state, a_t, X)
         total_reward += reward
         state = transition(state, a_t, X)
 
