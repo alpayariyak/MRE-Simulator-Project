@@ -113,7 +113,7 @@ def reward_function(state, action, X):
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
 
-        if action and isinstance(action, Trash_Object) and action.obj_class != 'reject' or X_h in non_recyclable_list and action == -1:
+        if action and isinstance(action, Trash_Object) and action.obj_class != 'reject' or X_h in non_recyclable_list and action == -1 or X_h[0] == 1 and action != -1 or X_h[2] == 1 and action != -1 or X_h[4] == 1 and action != -1:
             reward += -1
         return reward
     elif state['t'] == 0:
