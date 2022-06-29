@@ -5,9 +5,11 @@ from math import sqrt, ceil
 
 from copy import copy
 
-belt_indexes = {250: [0, 1],
-                450: [2, 3],
-                650: [4, 5]}
+# belt_indexes = {250: [0, 1],
+#                 450: [2, 3],
+#                 650: [4, 5]}
+
+belt_indexes = {450: [0, 1]}
 
 
 # Math related
@@ -195,7 +197,8 @@ def policy(state, policy_n, X_t, input_theta):
 
 def transition(state, a_t, X):
     new_state = state
-    RL_state = [0, 0, 0, 0, 0, 0, 1]
+    # RL_state = [0, 0, 0, 0, 0, 0, 1]
+    RL_state = [0, 0, 1]
     if new_state['t'] % create_interval == 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
@@ -236,6 +239,7 @@ def transition(state, a_t, X):
                     if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
                                                              y_belt) and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
                         RL_state[belt_indexes[y_belt][1]] = 1
+
             else:
                 to_delete.append(trash_obj_id)
         X.append(RL_state)

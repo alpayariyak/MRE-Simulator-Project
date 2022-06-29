@@ -31,7 +31,7 @@ start_time = time.time()
 
 start_time = time.time()
 
-# alt_umbrella(10, 5, 10, 0.2)
+alt_umbrella(10, 5, 10, 0.2)
 a, x, r = simulator([0, 0, 0], 1)
 print("--- %s seconds ---" % (time.time() - start_time))
 
