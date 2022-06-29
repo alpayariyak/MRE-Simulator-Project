@@ -1,6 +1,7 @@
 from sim_v3 import cnvwidth, s_to_ms, timestep, create_interval, fatigue_constant
 from random import choice, randint, random
-from numpy import exp
+from numpy import exp, cumsum
+from scipy.special import softmax
 from math import sqrt, ceil
 
 from copy import copy
@@ -171,16 +172,17 @@ def pick_action_index(input_theta, X_t, Yhat_H):
         a_p = cumsum_action_probabilities[i]
         if random_number < a_p:
             return i
-    return -1
+    return 0
 
 
-def policy(state, policy_n, X_t, input_theta):
+def policy(state, policy_n, X_t, input_theta, Yhat_H):
     action = False
     ybelts = [250, 450, 650]
 
     if policy_n == 5:
         action = -1
-        if not probability(sigma(input_theta.T.dot(X_t))):
+        a_index = pick_action_index(input_theta, X_t, Yhat_H)
+        if a_index == 0:
             action = False
             return False
 
