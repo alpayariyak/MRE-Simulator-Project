@@ -5,10 +5,10 @@ from math import sqrt, ceil
 
 from copy import copy
 
-belt_indexes = {250: [0, 1],
-                450: [2, 3],
-                650: [4, 5]}
-
+# belt_indexes = {250: [0, 1],
+#                 450: [2, 3],
+#                 650: [4, 5]}
+belt_indexes = {450: [0, 1]}
 
 # Math related
 def probability(*probs):
@@ -195,7 +195,8 @@ def policy(state, policy_n, X_t, input_theta):
 
 def transition(state, a_t, X):
     new_state = state
-    RL_state = [0, 0, 0, 0, 0, 0, 1]
+    # RL_state = [0, 0, 0, 0, 0, 0, 1]
+    RL_state = [0, 0,1]
     if new_state['t'] % create_interval == 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
