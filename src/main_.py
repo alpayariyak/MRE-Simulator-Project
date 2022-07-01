@@ -31,7 +31,7 @@ start_time = time.time()
 
 start_time = time.time()
 
-alt_umbrella(10, 10, 10, 0.5)
+alt_umbrella(10, 5, 10, 0.4)
 # trained_theta = train(5, 30, 0.3)
 # a, x, r, Yhat = simulator(trained_theta, 5)
 # a, x, r, Yhat = simulator(array([

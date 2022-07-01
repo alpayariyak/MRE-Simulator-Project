@@ -95,17 +95,18 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
         print(avg_reward)
         initial_rewards.append(avg_reward)
 
+    trained_thetas = []
     for i in range(n):
         in_theta = thetas[i]
         print('training: ', i * 100 / n, '%')
         current_theta = train(epochs, minibatches, epsilon, in_theta)
-        thetas.append(current_theta)
+        trained_thetas.append(current_theta)
 
     improved_rewards = 0
     highest_avg_reward = -999
     best_theta = 0
     for j in range(n):
-        theta = thetas[j]
+        theta = trained_thetas[j]
         avg_reward = theta_metric(theta, 3)
         print(avg_reward)
         if avg_reward > initial_rewards[j]:
@@ -114,7 +115,7 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
             highest_avg_reward = avg_reward
             best_theta = theta
 
-    print( improved_rewards / n)
-    print(theta)
+    print(improved_rewards / n)
+    print(best_theta)
 
     return improved_rewards / n
