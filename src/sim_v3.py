@@ -16,16 +16,17 @@ def simulator(input_theta, input_policy):
     global_.trash_id = 0
     a_t = False  # for i = 0
     state = {'trash_objects': global_.trash_objects, 'score': score, 'fatigue': fatigue,
-             'timeout': timeout, 't': i}
+             'timeout': timeout, 't': i, 'old score': 100}
 
     X = []
     A = []
+    Yhat_H = []
 
     for i in range(180 * s_to_ms):
-        reward = reward_function(state, a_t)
+        reward = reward_function(state)
         total_reward += reward
         state = transition(state, a_t, X)
-
-        a_t = action_function(state, X[int(i / s_to_ms)], A, input_theta, input_policy)
+        a_t = action_function(state, X[int(i / s_to_ms)], A, input_theta, input_policy, Yhat_H)
         clean_up(state)
-    return A, X, total_reward
+    print(state['score'])
+    return A, X, total_reward, Yhat_H

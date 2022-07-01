@@ -1,6 +1,6 @@
 from sim_v3 import simulator
 from RL_train_functions import train, train_umbrella, check_wrong_moves, alt_umbrella
-from numpy import array, copy, random
+from numpy import array, copy, random, argmax
 import time
 
 start_time = time.time()
@@ -31,8 +31,29 @@ start_time = time.time()
 
 start_time = time.time()
 
-alt_umbrella(10, 5, 10, 0.2)
-a, x, r = simulator([0, 0, 0], 1)
+# alt_umbrella(10, 5, 10, 0.2)
+#trained_theta = train(5, 20, 0.3)
+a, x, r, Yhat = simulator(array([
+    [-12, 0, 0, 0],
+    [12, 0, 0, 0],
+    [0, -12, 0 ,0],
+    [0, 12, 0, 0],
+    [0, 0, -12, 0],
+    [0, 0, 12, 0],
+    [0, 0, 0, 10]
+]), 5)
+
+print(r)
+# #
+# for n in range(len(x)):
+#     state = x[n]
+#     for idx, belt in {0:0, 2:1, 4:2}.items():
+#         if state[idx] == 1 and a[n+1][belt] == 1:
+#             print(state, a[n], argmax(Yhat[n]))
+
 print("--- %s seconds ---" % (time.time() - start_time))
 
-print(x)
+# print(array(x))
+# print(array(a))
+# print(r)
+# print(Yhat)
