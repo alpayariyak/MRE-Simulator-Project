@@ -57,16 +57,13 @@ def check_wrong_moves(X, A):
 
 def theta_metric(theta, folds):
     avg_reward = 0
-    avg_wrong_moves = 0
     for j in range(folds):
-        A, X, total_reward = simulator(theta, 5)
+        A, X, total_reward, Yhat = simulator(theta, 5)
         avg_reward += total_reward
-        avg_wrong_moves += check_wrong_moves(X, A)
 
     avg_reward = avg_reward / folds
-    avg_wrong_moves = avg_wrong_moves / folds
 
-    return avg_reward, avg_wrong_moves
+    return avg_reward
 
 
 def train_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
@@ -74,56 +71,50 @@ def train_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
     for i in range(n):
         current_theta = train(epochs, minibatches, epsilon)
         thetas.append(current_theta)
-    min_wrong_moves = 999
-    min_wrong_moves_theta = []
     max_reward = -999
     max_reward_theta = []
-    results = {}
     for theta in thetas:
-        avg_reward, avg_wrong_moves = theta_metric(theta, 5)
-
-        if min_wrong_moves > avg_wrong_moves:
-            min_wrong_moves = avg_wrong_moves
-            min_wrong_moves_theta = theta
+        avg_reward = theta_metric(theta, 5)
         if max_reward < avg_reward:
             max_reward = avg_reward
             max_reward_theta = theta
-    print(max_reward, min_wrong_moves, max_reward_theta, min_wrong_moves_theta)
+    print(max_reward, max_reward_theta)
 
-    return min_wrong_moves_theta, max_reward, min_wrong_moves, max_reward_theta, min_wrong_moves_theta
+    return max_reward, max_reward_theta
 
 
 def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
-
-    thetas = [np.random.randn(3, ) for i in range(n)]
+    thetas = [np.random.rand(7, 4) for i in range(n)]
 
     initial_rewards = []
     initial_wrong_moves = []
     for i in range(n):
         print('initializing: ', i * 100 / n, '%')
         theta = thetas[i]
-        avg_reward, avg_wrong_moves = theta_metric(theta, 3)
-        print(avg_wrong_moves, avg_reward)
-        initial_rewards.append(avg_reward), initial_wrong_moves.append(avg_wrong_moves)
+        avg_reward = theta_metric(theta, 3)
+        print(avg_reward)
+        initial_rewards.append(avg_reward)
 
     for i in range(n):
         in_theta = thetas[i]
-        print('training: ', i* 100/n, '%')
+        print('training: ', i * 100 / n, '%')
         current_theta = train(epochs, minibatches, epsilon, in_theta)
         thetas.append(current_theta)
 
     improved_rewards = 0
-    improved_wrong_moves = 0
-
+    highest_avg_reward = -999
+    best_theta = 0
     for j in range(n):
         theta = thetas[j]
-        avg_reward, avg_wrong_moves = theta_metric(theta, 3)
-        print(avg_wrong_moves, avg_reward)
+        avg_reward = theta_metric(theta, 3)
+        print(avg_reward)
         if avg_reward > initial_rewards[j]:
             improved_rewards += 1
-        if avg_wrong_moves < initial_wrong_moves[j]:
-            improved_wrong_moves += 1
+        if avg_reward> highest_avg_reward:
+            highest_avg_reward = avg_reward
+            best_theta = theta
 
-    print(improved_wrong_moves / n, improved_rewards / n)
+    print( improved_rewards / n)
+    print(theta)
 
-    return improved_wrong_moves / n, improved_rewards / n
+    return improved_rewards / n

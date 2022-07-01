@@ -31,19 +31,20 @@ start_time = time.time()
 
 start_time = time.time()
 
-# alt_umbrella(10, 5, 10, 0.2)
-#trained_theta = train(5, 20, 0.3)
-a, x, r, Yhat = simulator(array([
-    [-12, 0, 0, 0],
-    [12, 0, 0, 0],
-    [0, -12, 0 ,0],
-    [0, 12, 0, 0],
-    [0, 0, -12, 0],
-    [0, 0, 12, 0],
-    [0, 0, 0, 10]
-]), 5)
+alt_umbrella(10, 10, 10, 0.5)
+# trained_theta = train(5, 30, 0.3)
+# a, x, r, Yhat = simulator(trained_theta, 5)
+# a, x, r, Yhat = simulator(array([
+#     [-12, 0, 0, 0],
+#     [12, 0, 0, 0],
+#     [0, -12, 0 ,0],
+#     [0, 12, 0, 0],
+#     [0, 0, -12, 0],
+#     [0, 0, 12, 0],
+#     [0, 0, 0, 10]
+# ]), 5)
 
-print(r)
+
 # #
 # for n in range(len(x)):
 #     state = x[n]

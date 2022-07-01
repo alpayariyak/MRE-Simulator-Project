@@ -168,6 +168,7 @@ def pick_action_index(input_theta, X_t, Yhat_H):
         action_probability = cumsum_Yhat[index]
         if random_number < action_probability:
             return index
+    return 3
 
 
 def policy(state, policy_n, X_t, input_theta, Yhat_H):
@@ -191,7 +192,7 @@ def policy(state, policy_n, X_t, input_theta, Yhat_H):
                     action = 3
         ####################################
         elif policy_n == 5:
-            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelts[action_index]) and trash_obj.obj_class == 'reject':
+            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelts[action_index]):
                 return trash_obj
         ####################################
         elif policy_n == 6:
