@@ -1,5 +1,5 @@
 from sim_v3 import simulator
-from RL_train_functions import train, train_umbrella, check_wrong_moves, alt_umbrella
+from RL_train_functions import train, train_umbrella, theta_metric, alt_umbrella, grid_search
 from numpy import array, copy, random, argmax
 import time
 
@@ -11,8 +11,6 @@ start_time = time.time()
 # su2 = 0
 # with open('readme.txt', 'w') as f:
 #     f.write(f"{train_umbrella(100, 10, 20)}")
-
-
 
 
 #
@@ -30,10 +28,23 @@ start_time = time.time()
 
 
 start_time = time.time()
+params = {
+    'epochs': [5, 10, 20],
+    'minibatch size': [3, 8, 15],
+    'epsilon': [0.1, 0.3, 0.6]
+}
+print(grid_search(params))
+# # alt_umbrella(10, 5, 20, 0.2)
+# # trained_theta = train(5, 30, 0.3)
+# a, x, r, Yhat = simulator(array([[-1.16778246,  0.72984809, -0.04524764, -2.71033267],
+#  [ 0.76662222,  0.02748385,  1.16494243, -0.96301335],
+#  [-1.30129364,  1.12192298,  7.40470291, -5.63792408],
+#  [ 1.28928343,  7.00284978, -7.09029932,  1.88767191],
+#  [ 0.0804976,   5.08767801, -0.23981209, -2.73047897],
+#  [-2.70800845, -2.52037032,  1.44247708,  4.21364908],
+#  [-1.13940943, -1.17240092,  4.4804686,  -3.0590391 ]]), 5)
 
-alt_umbrella(10, 5, 10, 0.4)
-# trained_theta = train(5, 30, 0.3)
-# a, x, r, Yhat = simulator(trained_theta, 5)
+
 # a, x, r, Yhat = simulator(array([
 #     [-12, 0, 0, 0],
 #     [12, 0, 0, 0],

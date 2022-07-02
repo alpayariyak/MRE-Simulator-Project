@@ -111,7 +111,7 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
         print(avg_reward)
         if avg_reward > initial_rewards[j]:
             improved_rewards += 1
-        if avg_reward> highest_avg_reward:
+        if avg_reward > highest_avg_reward:
             highest_avg_reward = avg_reward
             best_theta = theta
 
@@ -119,3 +119,20 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
     print(best_theta)
 
     return improved_rewards / n
+
+
+def grid_search(hyperparams, trials = 10, validation_n=10):  # epochs, minibatch size, learning rate
+    thetas = [np.random.rand(7, 4) for i in range(trials)]
+    max_reward = -999
+    best_epoch_n = 0
+    best_minibatch_size = 0
+    best_epsilon = 0
+    for a_theta in thetas:
+        for epoch in hyperparams['epochs']:
+            for minibatch_size in hyperparams['minibatch size']:
+                for epsilon in hyperparams['epsilon']:
+                    curr_theta = train(epoch, minibatch_size, epsilon, a_theta)
+                    current_avg_reward = theta_metric(curr_theta, validation_n)
+                    if current_avg_reward > max_reward:
+                        best_epoch_n, best_minibatch_size, best_epsilon = epoch, minibatch_size, epsilon
+    return best_epoch_n, best_minibatch_size, best_epsilon
