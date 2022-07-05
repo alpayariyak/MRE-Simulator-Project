@@ -1,4 +1,7 @@
+from math import ceil, floor
 import numpy as np
+import psutil
+from multiprocessing import Pool
 from functions import sigma
 from sim_v3 import simulator
 
@@ -121,18 +124,55 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
     return improved_rewards / n
 
 
-def grid_search(hyperparams, trials = 10, validation_n=10):  # epochs, minibatch size, learning rate
+def output_configs(hyperparams):
+    configs = []
+    for epoch in hyperparams['epochs']:
+        for minibatch_size in hyperparams['minibatch size']:
+            for epsilon in hyperparams['epsilon']:
+                configs.append([epoch, minibatch_size, epsilon])
+    return configs
+
+
+def config_avg_reward(args):
+    config, in_theta, validation_n = args
+    epoch, minibatch_size, epsilon = config
+    trained_theta = train(epoch, minibatch_size, epsilon, in_theta)
+    avg_reward = theta_metric(trained_theta, validation_n)
+    return avg_reward
+
+
+def grid_search(hyperparams, trials=10, validation_n=10):  # epochs, minibatch size, learning rate
+
+    num_cpus = psutil.cpu_count(logical=False)
+    pool = Pool(num_cpus)
     thetas = [np.random.rand(7, 4) for i in range(trials)]
+    configs = output_configs(hyperparams)
+
     max_reward = -999
-    best_epoch_n = 0
-    best_minibatch_size = 0
-    best_epsilon = 0
-    for a_theta in thetas:
-        for epoch in hyperparams['epochs']:
-            for minibatch_size in hyperparams['minibatch size']:
-                for epsilon in hyperparams['epsilon']:
-                    curr_theta = train(epoch, minibatch_size, epsilon, a_theta)
-                    current_avg_reward = theta_metric(curr_theta, validation_n)
-                    if current_avg_reward > max_reward:
-                        best_epoch_n, best_minibatch_size, best_epsilon = epoch, minibatch_size, epsilon
-    return best_epoch_n, best_minibatch_size, best_epsilon
+    best_config = 0
+    total_rewards = []
+    total_c_counter = [0 for _ in range(len(configs))]
+    for theta in thetas:
+        rewards_for_theta = []
+        for i in range(ceil(len(configs) / num_cpus)):
+
+            if i != ceil(len(configs) / num_cpus) - 1:
+                current_configs = configs[i * num_cpus:i * num_cpus + num_cpus]
+            else:
+                current_configs = configs[i * num_cpus:]
+
+            n_processes = len(current_configs)
+            rewards_for_theta += pool.map(config_avg_reward,
+                                          [[configs[j], theta, validation_n] for j in range(n_processes)])
+
+        max_reward_theta = -999
+        config_index = 0
+        for k in range(len(rewards_for_theta)):
+            if rewards_for_theta[k] > max_reward_theta:
+                max_reward = rewards_for_theta[k]
+                config_index = k
+        total_c_counter[config_index] += 1
+
+        total_rewards += rewards_for_theta
+
+    return configs[np.argmax(total_c_counter)]

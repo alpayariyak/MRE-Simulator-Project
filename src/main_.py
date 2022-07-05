@@ -1,5 +1,7 @@
+import psutil
+
 from sim_v3 import simulator
-from RL_train_functions import train, train_umbrella, theta_metric, alt_umbrella, grid_search
+from RL_train_functions import train, train_umbrella, theta_metric, alt_umbrella, grid_search, output_configs
 from numpy import array, copy, random, argmax
 import time
 
@@ -26,14 +28,23 @@ start_time = time.time()
 # print("--- %s seconds ---" % (time.time() - start_time))
 #
 
+if __name__ == '__main__':
+    start_time = time.time()
+    params = {
+        'epochs': [80, 100],
+        'minibatch size': [50, 30],
+        'epsilon': [0.7, 0.8, 0.5, 1000]
+    }
+    print(grid_search(params))
 
-start_time = time.time()
-params = {
-    'epochs': [5, 10, 20],
-    'minibatch size': [3, 8, 15],
-    'epsilon': [0.1, 0.3, 0.6]
-}
-print(grid_search(params))
+#print(theta_metric(train(5, 15, 0.3), 20))
+#[5, 15, 0.3] best so far
+#[20, 8, 0.1]
+
+# print(len(output_configs(params)))
+
+
+
 # # alt_umbrella(10, 5, 20, 0.2)
 # # trained_theta = train(5, 30, 0.3)
 # a, x, r, Yhat = simulator(array([[-1.16778246,  0.72984809, -0.04524764, -2.71033267],
