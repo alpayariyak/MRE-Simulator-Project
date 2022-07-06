@@ -91,7 +91,7 @@ def train_argslist(args):
     return train(epochs, minibatches, epsilon, in_theta, seconds)
 
 
-def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180):
+def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180, multiprocessing_bool=True):
     thetas = [np.random.rand(7, 4) for i in range(n)]
 
     initial_rewards = []
@@ -104,9 +104,16 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180):
         initial_rewards.append(avg_reward)
 
     trained_thetas = []
-    with Pool(psutil.cpu_count(logical=False)) as p:
-        trained_thetas.append(
-            p.map(train_argslist, [[epochs, minibatches, epsilon, thetas[n_th], seconds] for n_th in range(len(thetas))]))
+    if multiprocessing_bool:
+        with Pool(psutil.cpu_count(logical=False)) as p:
+            trained_thetas.append(
+                p.map(train_argslist, [[epochs, minibatches, epsilon, thetas[n_th], seconds] for n_th in range(len(thetas))]))
+    else:
+        for i in range(n):
+            in_theta = thetas[i]
+            print('training: ', i * 100 / n, '%')
+            current_theta = train(epochs, minibatches, epsilon, in_theta)
+            trained_thetas.append(current_theta)
 
     improved_rewards = 0
     highest_avg_reward = -999
