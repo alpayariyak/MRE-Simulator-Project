@@ -15,12 +15,11 @@ if __name__ == '__main__':
     # print(grid_search(params))
 
     trained_on_180 = alt_umbrella(10, 20, 15, 0.5, multiprocessing_bool = True)
-    trained_on_20 = alt_umbrella(10, 20, 15, 0.5, seconds=20)
-    print("180: " + theta_metric(trained_on_180, 20))
-    print("20: " + theta_metric(trained_on_20, 20))
+    trained_on_20 = alt_umbrella(10, 20, 15, 0.5, seconds=20, multiprocessing_bool=True)
+    print("180: " + f"{theta_metric(trained_on_180, 20)}")
+    print("20: " + f"{theta_metric(trained_on_20, 20)}")
     # [5, 15, 0.3] best so far
     # [20, 8, 0.1]
-
 
     # # alt_umbrella(10, 5, 20, 0.2)
     # # trained_theta = train(5, 30, 0.3)

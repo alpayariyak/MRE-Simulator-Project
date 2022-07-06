@@ -60,6 +60,8 @@ def check_wrong_moves(X, A):
 
 def theta_metric(theta, folds, seconds=180):
     avg_reward = 0
+    if isinstance(theta, list):
+        print(theta)
     for j in range(folds):
         A, X, total_reward, Yhat = simulator(theta, 5, seconds)
         avg_reward += total_reward
@@ -112,26 +114,25 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180, multipro
         for i in range(n):
             in_theta = thetas[i]
             print('training: ', i * 100 / n, '%')
-            current_theta = train(epochs, minibatches, epsilon, in_theta)
-            trained_thetas.append(current_theta)
+            trained_thetas.append(train(epochs, minibatches, epsilon, in_theta, seconds))
 
     improved_rewards = 0
     highest_avg_reward = -999
     best_theta = 0
     for j in range(n):
-        theta = trained_thetas[j]
-        avg_reward = theta_metric(theta, 3)
+        trained_theta = trained_thetas[j]
+        avg_reward = theta_metric(trained_theta, 3)
         print(avg_reward)
         if avg_reward > initial_rewards[j]:
             improved_rewards += 1
         if avg_reward > highest_avg_reward:
             highest_avg_reward = avg_reward
-            best_theta = theta
+            best_theta = trained_theta
 
     print(improved_rewards / n)
     print(best_theta)
 
-    return improved_rewards / n
+    return best_theta
 
 
 def output_configs(hyperparams):
