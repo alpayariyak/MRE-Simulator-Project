@@ -31,11 +31,11 @@ def gradient_function(sum_gradlog_unsquared, total_reward_T, b):
     return gradient / len(total_reward_T)
 
 
-def train(epochs, minibatches, epsilon, theta=np.random.randn(7, 4)):
+def train(epochs, minibatches, epsilon, theta=np.random.randn(7, 4), seconds=180):
     for epoch in range(epochs):
         A_T, X_T, total_reward_T, Yhat_T = [], [], [], []
         for minibatch in range(1, minibatches + 1):
-            A, X, total_reward, Yhat = simulator(theta, 5)
+            A, X, total_reward, Yhat = simulator(theta, 5, seconds)
             A_T.append(A), X_T.append(X), total_reward_T.append(total_reward), Yhat_T.append(Yhat)
 
         b, sum_gradlog_unsquared = baseline(X_T, A_T, total_reward_T, Yhat_T, theta)
@@ -58,10 +58,10 @@ def check_wrong_moves(X, A):
     return counter
 
 
-def theta_metric(theta, folds):
+def theta_metric(theta, folds, seconds=180):
     avg_reward = 0
     for j in range(folds):
-        A, X, total_reward, Yhat = simulator(theta, 5)
+        A, X, total_reward, Yhat = simulator(theta, 5, seconds)
         avg_reward += total_reward
 
     avg_reward = avg_reward / folds
@@ -86,7 +86,12 @@ def train_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
     return max_reward, max_reward_theta
 
 
-def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
+def train_argslist(args):
+    epochs, minibatches, epsilon, in_theta, seconds = args
+    return train(epochs, minibatches, epsilon, in_theta, seconds)
+
+
+def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180):
     thetas = [np.random.rand(7, 4) for i in range(n)]
 
     initial_rewards = []
@@ -99,11 +104,9 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
         initial_rewards.append(avg_reward)
 
     trained_thetas = []
-    for i in range(n):
-        in_theta = thetas[i]
-        print('training: ', i * 100 / n, '%')
-        current_theta = train(epochs, minibatches, epsilon, in_theta)
-        trained_thetas.append(current_theta)
+    with Pool(psutil.cpu_count(logical=False)) as p:
+        trained_thetas.append(
+            p.map(train_argslist, [[epochs, minibatches, epsilon, thetas[n_th], seconds] for n_th in range(len(thetas))]))
 
     improved_rewards = 0
     highest_avg_reward = -999
