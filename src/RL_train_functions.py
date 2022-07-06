@@ -108,8 +108,7 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180, multipro
     trained_thetas = []
     if multiprocessing_bool:
         with Pool(psutil.cpu_count(logical=False)) as p:
-            trained_thetas.append(
-                p.map(train_argslist, [[epochs, minibatches, epsilon, thetas[n_th], seconds] for n_th in range(len(thetas))]))
+            trained_thetas = p.map(train_argslist, [[epochs, minibatches, epsilon, thetas[n_th], seconds] for n_th in range(len(thetas))])
     else:
         for i in range(n):
             in_theta = thetas[i]
