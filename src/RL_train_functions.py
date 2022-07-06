@@ -102,7 +102,6 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180, multipro
         print('initializing: ', i * 100 / n, '%')
         theta = thetas[i]
         avg_reward = theta_metric(theta, 3)
-        print(avg_reward)
         initial_rewards.append(avg_reward)
 
     trained_thetas = []
