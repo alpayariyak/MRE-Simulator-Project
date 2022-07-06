@@ -154,6 +154,8 @@ def action_function(state, X_t, A, input_theta, input_policy, Yhat_H):
 
         else:
             a_t = False
+    if tstep_bool:
+        clean_up(state)
     return a_t
 
 
@@ -182,7 +184,10 @@ def policy(state, policy_n, X_t, input_theta, Yhat_H):
             return 3
 
     for trash_obj_id, trash_obj in state['trash_objects'].items():
-        if policy_n == 0:
+        if policy_n == 5:
+            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelts[action_index]):
+                return trash_obj
+        elif policy_n == 0:
             action = False
         elif policy_n == 1:
             for ybelt in ybelts:
@@ -191,9 +196,7 @@ def policy(state, policy_n, X_t, input_theta, Yhat_H):
                 else:
                     action = 3
         ####################################
-        elif policy_n == 5:
-            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelts[action_index]):
-                return trash_obj
+
         ####################################
         elif policy_n == 6:
             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
@@ -205,13 +208,13 @@ def policy(state, policy_n, X_t, input_theta, Yhat_H):
 
 def transition(state, a_t, X):
     new_state = state
-    RL_state = [0, 0, 0, 0, 0, 0, 1]
     if new_state['t'] % create_interval == 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
         makeRandomTrash(3)
 
     if timestep_bool(new_state):
+        RL_state = [0, 0, 0, 0, 0, 0, 1]
         new_state['old score'] = state['score']
         to_delete = []
         to_delete_bool = False

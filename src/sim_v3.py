@@ -22,10 +22,9 @@ def simulator(input_theta, input_policy):
     A = []
     Yhat_H = []
 
-    for i in range(20 * s_to_ms):
+    for i in range(180 * s_to_ms):
         reward = reward_function(state)
         total_reward += reward
         state = transition(state, a_t, X)
         a_t = action_function(state, X[-1], A, input_theta, input_policy, Yhat_H)
-        clean_up(state)
     return A, X, total_reward, Yhat_H

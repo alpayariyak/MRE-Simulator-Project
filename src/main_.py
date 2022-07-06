@@ -1,8 +1,6 @@
-import psutil
-
 from sim_v3 import simulator
-from RL_train_functions import train, train_umbrella, theta_metric, alt_umbrella, grid_search, output_configs
-from numpy import array, copy, random, argmax
+#from RL_train_functions import train, train_umbrella, theta_metric, alt_umbrella, grid_search, output_configs
+from numpy import array#, copy, random, argmax
 import time
 
 start_time = time.time()
@@ -30,14 +28,22 @@ start_time = time.time()
 
 if __name__ == '__main__':
     start_time = time.time()
-    params = {
-        'epochs': [80, 100],
-        'minibatch size': [50, 30],
-        'epsilon': [0.7, 0.8, 0.5, 1000]
-    }
-    print(grid_search(params))
+    # params = {
+    #     'epochs': [80, 100],
+    #     'minibatch size': [50, 30],
+    #     'epsilon': [0.7, 0.8, 0.5]
+    # }
+    # print(grid_search(params))
 
-#print(theta_metric(train(5, 15, 0.3), 20))
+    a, x, r, Yhat = simulator(array([
+        [-12, 0, 0, 0],
+        [12, 0, 0, 0],
+        [0, -12, 0 ,0],
+        [0, 12, 0, 0],
+        [0, 0, -12, 0],
+        [0, 0, 12, 0],
+        [0, 0, 0, 10]
+    ]), 5)
 #[5, 15, 0.3] best so far
 #[20, 8, 0.1]
 
@@ -56,15 +62,7 @@ if __name__ == '__main__':
 #  [-1.13940943, -1.17240092,  4.4804686,  -3.0590391 ]]), 5)
 
 
-# a, x, r, Yhat = simulator(array([
-#     [-12, 0, 0, 0],
-#     [12, 0, 0, 0],
-#     [0, -12, 0 ,0],
-#     [0, 12, 0, 0],
-#     [0, 0, -12, 0],
-#     [0, 0, 12, 0],
-#     [0, 0, 0, 10]
-# ]), 5)
+
 
 
 # #
@@ -74,7 +72,7 @@ if __name__ == '__main__':
 #         if state[idx] == 1 and a[n+1][belt] == 1:
 #             print(state, a[n], argmax(Yhat[n]))
 
-print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 # print(array(x))
 # print(array(a))
