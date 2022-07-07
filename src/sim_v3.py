@@ -8,7 +8,7 @@ fatigue_constant = 0.000008
 from functions import *
 
 
-def simulator(input_theta, input_policy, seconds=180):
+def simulator(input_theta, input_policy, seconds=180, fatigue_multiplier=0.1):
     import global_
     trash_id, reward, i, fatigue, timeout = 0, 0, 0, 0, 0
     score, total_reward = 100, 100
@@ -23,8 +23,8 @@ def simulator(input_theta, input_policy, seconds=180):
     Yhat_H = []
 
     for i in range(seconds * s_to_ms):
-        reward = reward_function(state)
+        reward = reward_function(state, A)
         total_reward += reward
         state = transition(state, a_t, X)
         a_t = action_function(state, X[-1], A, input_theta, input_policy, Yhat_H)
-    return A, X, total_reward, Yhat_H
+    return A, X, total_reward, Yhat_H, state['score']

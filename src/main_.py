@@ -1,7 +1,9 @@
 from sim_v3 import simulator
 from RL_train_functions import train, train_umbrella, theta_metric, alt_umbrella, grid_search, output_configs
-from numpy import array  # , copy, random, argmax
+from numpy import array, full  # , copy, random, argmax
 import time
+
+import global_
 
 start_time = time.time()
 
@@ -14,11 +16,18 @@ if __name__ == '__main__':
     # }
     # print(grid_search(params))
 
-    trained_on_180 = alt_umbrella(10, 20, 15, 0.5, multiprocessing_bool = True)
-
-    trained_on_20 = alt_umbrella(10, 20, 15, 0.5, seconds=20, multiprocessing_bool=True)
-    print("180: " + f"{theta_metric(trained_on_180, 40)}")
-    print("20: " + f"{theta_metric(trained_on_20, 40)}")
+    #
+    e = 0.1
+    epsilon = full((7,4), e)
+    epsilon[-1].fill(e*0.1)
+    print(epsilon)
+    # trained_on_180 = alt_umbrella(10, 20, 15, epsilon)
+    for multiplier in [0.1, 0.2, 0.5, 1, 2]:
+        global_.fatigue_multiplier = multiplier
+        trained_on_20 = alt_umbrella(10, 20, 10, epsilon, seconds=20)
+    # print("180: " + f"{theta_metric(trained_on_180, 40)}")
+        print(f"{multiplier}:  " + f"r, s = {theta_metric(trained_on_20, 50)}")
+        print(trained_on_20)
     # [5, 15, 0.3] best so far
     # [20, 8, 0.1]
 

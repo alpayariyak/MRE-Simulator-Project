@@ -35,7 +35,7 @@ def train(epochs, minibatches, epsilon, theta=np.random.randn(7, 4), seconds=180
     for epoch in range(epochs):
         A_T, X_T, total_reward_T, Yhat_T = [], [], [], []
         for minibatch in range(1, minibatches + 1):
-            A, X, total_reward, Yhat = simulator(theta, 5, seconds)
+            A, X, total_reward, Yhat, score = simulator(theta, 5, seconds)
             A_T.append(A), X_T.append(X), total_reward_T.append(total_reward), Yhat_T.append(Yhat)
 
         b, sum_gradlog_unsquared = baseline(X_T, A_T, total_reward_T, Yhat_T, theta)
@@ -60,15 +60,16 @@ def check_wrong_moves(X, A):
 
 def theta_metric(theta, folds, seconds=180):
     avg_reward = 0
-    if isinstance(theta, list):
-        print(theta)
+    avg_score = 0
+
     for j in range(folds):
-        A, X, total_reward, Yhat = simulator(theta, 5, seconds)
+        A, X, total_reward, Yhat, score = simulator(theta, 5, seconds)
         avg_reward += total_reward
+        avg_score += score
 
     avg_reward = avg_reward / folds
-
-    return avg_reward
+    avg_score = avg_score / folds
+    return avg_reward, avg_score
 
 
 def train_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
@@ -79,7 +80,7 @@ def train_umbrella(n, epochs=5, minibatches=10, epsilon=0.2):
     max_reward = -999
     max_reward_theta = []
     for theta in thetas:
-        avg_reward = theta_metric(theta, 5)
+        avg_reward, avg_score = theta_metric(theta, 5)
         if max_reward < avg_reward:
             max_reward = avg_reward
             max_reward_theta = theta
@@ -96,17 +97,19 @@ def train_argslist(args):
 def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180, multiprocessing_bool=True):
     thetas = [np.random.rand(7, 4) for i in range(n)]
 
-    initial_rewards = []
+    initial_rewards_scores = []
     initial_wrong_moves = []
     for i in range(n):
-        print('initializing: ', i * 100 / n, '%')
+        # print('initializing: ', i * 100 / n, '%')
         theta = thetas[i]
-        avg_reward = theta_metric(theta, 3)
-        initial_rewards.append(avg_reward)
+        avg_reward, avg_score = theta_metric(theta, 10)
+        # print(avg_reward, avg_score)
+        initial_rewards_scores.append([avg_reward,avg_score])
 
     trained_thetas = []
     if multiprocessing_bool:
-        with Pool(psutil.cpu_count(logical=False)) as p:
+        cores = psutil.cpu_count(logical=False)
+        with Pool(5)as p:
             trained_thetas = p.map(train_argslist, [[epochs, minibatches, epsilon, thetas[n_th], seconds] for n_th in range(len(thetas))])
     else:
         for i in range(n):
@@ -115,20 +118,28 @@ def alt_umbrella(n, epochs=5, minibatches=10, epsilon=0.2, seconds=180, multipro
             trained_thetas.append(train(epochs, minibatches, epsilon, in_theta, seconds))
 
     improved_rewards = 0
-    highest_avg_reward = -999
+    improved_score = 0
+    highest_avg_reward, highest_avg_score = -999, -999
+
     best_theta = 0
     for j in range(n):
         trained_theta = trained_thetas[j]
-        avg_reward = theta_metric(trained_theta, 3)
-        print(avg_reward)
-        if avg_reward > initial_rewards[j]:
+        initial_reward, initial_score  = initial_rewards_scores[j]
+        avg_reward, avg_score = theta_metric(trained_theta, 10)
+        # print(avg_reward, avg_score)
+        if avg_reward > initial_reward:
             improved_rewards += 1
+        if avg_score > initial_score:
+            improved_score += 1
         if avg_reward > highest_avg_reward:
             highest_avg_reward = avg_reward
+
+        if avg_score > highest_avg_score:
+            highest_avg_score = avg_score
             best_theta = trained_theta
 
-    print(improved_rewards / n)
-    print(best_theta)
+    print(improved_score / n)
+    # print(best_theta)
 
     return best_theta
 
@@ -146,7 +157,7 @@ def config_avg_reward(args):
     config, in_theta, validation_n = args
     epoch, minibatch_size, epsilon = config
     trained_theta = train(epoch, minibatch_size, epsilon, in_theta)
-    avg_reward = theta_metric(trained_theta, validation_n)
+    avg_reward, avg_score = theta_metric(trained_theta, validation_n)
     return avg_reward
 
 

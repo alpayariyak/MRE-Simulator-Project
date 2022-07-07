@@ -1,3 +1,5 @@
+import numpy as np
+
 from sim_v3 import cnvwidth, s_to_ms, timestep, create_interval, fatigue_constant
 from random import choice, randint, random
 from numpy import exp, array, cumsum
@@ -95,17 +97,18 @@ def clean_up(state):
 
 
 # RL Environment
-def reward_function(state):
+def reward_function(state, A):
+    from global_ import fatigue_multiplier
     if timestep_bool(state) and not state['t'] == 0:
         reward = 0
+        if A[-1][-1] != 1:
+            reward += -fatigue_multiplier*(1+np.argmax(A[-1]))
         for trash_id_state, trash_obj in state['trash_objects'].items():
             if trash_obj.x > cnvwidth and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
                 reward += -1
 
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
-
-
         return reward
     elif state['t'] == 0:
         return 0
