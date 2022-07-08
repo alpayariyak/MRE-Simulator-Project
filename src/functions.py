@@ -6,7 +6,8 @@ from numpy import exp, array, cumsum
 from math import sqrt, ceil
 from scipy.special import softmax
 from copy import copy
-
+from global_ import fatigue_multiplier
+import RL_v2
 belt_indexes = {250: [0, 1],
                 450: [2, 3],
                 650: [4, 5]}
@@ -97,12 +98,12 @@ def clean_up(state):
 
 
 # RL Environment
+
 def reward_function(state, A):
-    from global_ import fatigue_multiplier
     if timestep_bool(state) and not state['t'] == 0:
         reward = 0
         if A[-1][-1] != 1:
-            reward += -fatigue_multiplier*(1+np.argmax(A[-1]))
+            reward += -fatigue_multiplier * (1 + np.argmax(A[-1]))
         for trash_id_state, trash_obj in state['trash_objects'].items():
             if trash_obj.x > cnvwidth and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
                 reward += -1
@@ -110,8 +111,6 @@ def reward_function(state, A):
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
         return reward
-    elif state['t'] == 0:
-        return 0
     else:
         return 0
 
@@ -146,7 +145,7 @@ def action_function(state, X_t, A, input_theta, input_policy, Yhat_H):
             belt_action_vector = {200: [1, 0, 0, 0],
                                   400: [0, 1, 0, 0],
                                   600: [0, 0, 1, 0]}
-            a_t = policy(state, input_policy, X_t, input_theta, Yhat_H)  # returns 0, 1, 2 or trash obj
+            a_t = policy(state, input_policy, X_t, input_theta)  # returns 0, 1, 2 or trash obj
 
             if isinstance(a_t, int):
                 action_vector = [0, 0, 0, 0]
@@ -176,12 +175,12 @@ def pick_action_index(input_theta, X_t, Yhat_H):
     return 3
 
 
-def policy(state, policy_n, X_t, input_theta, Yhat_H):
+def policy(state, policy_n, X_t, input_theta):
     action = False
     ybelts = [250, 450, 650]
 
     if policy_n == 5:
-        action_index = pick_action_index(input_theta, X_t, Yhat_H)
+        action_index = RL_v2.select_action(X_t, input_theta)
         action = action_index
         if action_index == 3:
             return 3
@@ -221,15 +220,15 @@ def transition(state, a_t, X):
         new_state['old score'] = state['score']
         to_delete = []
         to_delete_bool = False
-        if not a_t == 3: #if not do nothing
+        if not a_t == 3:  # if not do nothing
             if a_t == 0:
                 new_state['fatigue'] += 0.00036
                 # new_state['timeout'] += 0
             elif a_t == 1:
-                new_state['fatigue'] += 0.00036 *2
+                new_state['fatigue'] += 0.00036 * 2
                 # new_state['timeout'] += 1
             elif a_t == 2:
-                new_state['fatigue'] += 0.00036 *3
+                new_state['fatigue'] += 0.00036 * 3
                 # new_state['timeout'] += 2
             else:
                 if probability(1 - new_state['fatigue'], speed_probability[a_t.speedx],
@@ -237,7 +236,7 @@ def transition(state, a_t, X):
                     a_t.dragToTrash()
                     a_t.deleted = True
                 new_state['fatigue'] += fatigue_function(a_t)
-                #new_state['timeout'] += timeout_function(a_t)
+                # new_state['timeout'] += timeout_function(a_t)
 
         from global_ import to_delete
         for trash_obj_id, trash_obj in new_state['trash_objects'].items():
@@ -261,7 +260,7 @@ def transition(state, a_t, X):
                         RL_state[belt_indexes[y_belt][1]] = 1
             else:
                 to_delete.append(trash_obj_id)
-        X.append(RL_state)
+        X.append(array(RL_state))
     state['t'] += 1
 
     return new_state
