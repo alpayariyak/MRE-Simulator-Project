@@ -99,7 +99,7 @@ def clean_up(state):
 
 # RL Environment
 
-def reward_function(state, A):
+def reward_function(state, A, r_H):
     if timestep_bool(state) and not state['t'] == 0:
         reward = 0
         if A[-1][-1] != 1:
@@ -110,6 +110,7 @@ def reward_function(state, A):
 
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
+        r_H.append(reward)
         return reward
     else:
         return 0
@@ -131,7 +132,7 @@ def timeout_function(action):
     return int(ceil((t / s_to_ms) / timestep))
 
 
-def action_function(state, X_t, A, input_theta, input_policy, Yhat_H):
+def action_function(state, X_t, A, input_theta, input_policy):
     tstep_bool = timestep_bool(state)
     if timeout_bool(state):
         a_t = False

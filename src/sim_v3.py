@@ -20,11 +20,11 @@ def simulator(input_theta, input_policy, seconds=180, fatigue_multiplier=0.1):
 
     X = []
     A = []
-    Yhat_H = []
+    rewards_H = []
 
     for i in range(seconds * s_to_ms):
-        reward = reward_function(state, A)
+        reward = reward_function(state, A, rewards_H)
         total_reward += reward
         state = transition(state, a_t, X)
-        a_t = action_function(state, X[-1], A, input_theta, input_policy, Yhat_H)
-    return A, X, total_reward, Yhat_H, state['score']
+        a_t = action_function(state, X[-1], A, input_theta, input_policy)
+    return A, X, total_reward, rewards_H, state['score']
