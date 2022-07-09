@@ -82,13 +82,13 @@ def theta_metric(theta, folds, seconds=180):
 
 
 training_policy = Policy()
-optimizer = optim.Adam(training_policy.parameters(), lr=5e-2)
+optimizer = optim.Adam(training_policy.parameters(), lr=1e-2)
 eps = np.finfo(np.float32).eps.item()
 
 
 def main():
     from sim_v3 import simulator
-    running_reward = 0
+    running_reward = 10
     for i_episode in range(10000):
         A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
         training_policy.rewards = rewards_H
@@ -104,7 +104,7 @@ def main():
                   "the last episode runs to time steps!".format(running_reward))
             break
 
-        if i_episode % 100 == 0:
+        if i_episode % 500 == 0:
             print(training_policy.affine1.weight.data)
 
 
