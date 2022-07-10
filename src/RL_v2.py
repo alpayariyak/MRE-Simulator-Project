@@ -28,13 +28,18 @@ args = parser.parse_args()
 class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(7, 4)
+        self.affine1 = nn.Linear(7, 128)
+        self.dropout = nn.Dropout(p=0.2)
+        self.affine2 = nn.Linear(128, 4)
 
         self.saved_log_probs = []
         self.rewards = []
 
     def forward(self, x):
-        action_scores = self.affine1(x)
+        x = self.affine1(x)
+        x = self.dropout(x)
+        x = F.relu(x)
+        action_scores = self.affine2(x)
         return F.softmax(action_scores, dim=1)
 
 
@@ -105,7 +110,7 @@ def main():
             break
 
         if i_episode % 500 == 0:
-            print(training_policy.affine1.weight.data)
+            pass#print(training_policy.affine2.weight.data)
 
 
 if __name__ == '__main__':
