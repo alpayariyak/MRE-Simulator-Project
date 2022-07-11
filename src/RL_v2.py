@@ -19,6 +19,8 @@ parser.add_argument('--render', action='store_true',
                     help='render the environment')
 parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='interval between training status logs (default: 10)')
+
+
 args = parser.parse_args()
 
 
@@ -30,9 +32,9 @@ args = parser.parse_args()
 class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(7, 4)
-
-
+        self.affine1 = nn.Linear(6, 4)
+        # self.dropout = nn.Dropout(p=0.6)
+        # self.affine2 = nn.Linear(4, 4)
         self.saved_log_probs = []
         self.rewards = []
 
@@ -73,36 +75,26 @@ def finish_episode():
     del training_policy.saved_log_probs[:]
 
 
-def theta_metric(theta, folds, seconds=180):
-    avg_reward = 0
-    avg_score = 0
-
-    for j in range(folds):
-        A, X, total_reward, Yhat, score = simulator(theta, 5, seconds)
-        avg_reward += total_reward
-        avg_score += score
-
-    avg_reward = avg_reward / folds
-    avg_score = avg_score / folds
-    return avg_reward, avg_score
-
-
 training_policy = Policy()
-optimizer = optim.Adam(training_policy.parameters(), lr=1e-1)
+optimizer = optim.Adam([
+            {'params': training_policy.affine1.weight},
+            {'params': training_policy.affine1.bias, 'lr': 1e-1}
+            # {'params': training_policy.layer2.weight, 'lr': 0.001}
+],  lr=1e-1)
 eps = np.finfo(np.float32).eps.item()
 
 
 def main():
     from sim_v3 import simulator
-    running_reward = 10
-    for i_episode in range(10000):
+    running_reward = 0
+    for i_episode in range(1000):
         A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
         training_policy.rewards = rewards_H
 
         running_reward = 0.05 * total_reward + (1 - 0.05) * running_reward
         finish_episode()
 
-        if i_episode % 50 == 0:
+        if i_episode % 100 == 0:
             print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f} \t Score: {}'.format(
                 i_episode, total_reward, running_reward, score))
             a_temp = [np.argmax(a_) for a_ in A]

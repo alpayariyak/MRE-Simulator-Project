@@ -217,7 +217,7 @@ def transition(state, a_t, X):
         makeRandomTrash(3)
 
     if timestep_bool(new_state):
-        RL_state = [0, 0, 0, 0, 0, 0, 1]
+        RL_state = [0, 0, 0, 0, 0, 0]
         new_state['old score'] = state['score']
         to_delete = []
         to_delete_bool = False
