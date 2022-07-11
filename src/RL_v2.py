@@ -1,4 +1,6 @@
 import argparse
+from collections import Counter
+
 import numpy as np
 from itertools import count
 
@@ -28,18 +30,17 @@ args = parser.parse_args()
 class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(7, 128)
-        self.dropout = nn.Dropout(p=0.2)
-        self.affine2 = nn.Linear(128, 4)
+        self.affine1 = nn.Linear(7, 4)
+
 
         self.saved_log_probs = []
         self.rewards = []
 
     def forward(self, x):
-        x = self.affine1(x)
-        x = self.dropout(x)
-        x = F.relu(x)
-        action_scores = self.affine2(x)
+        # x = self.affine1(x)
+        # x = self.dropout(x)
+        # x = F.relu(x)
+        action_scores = self.affine1(x)
         return F.softmax(action_scores, dim=1)
 
 
@@ -87,7 +88,7 @@ def theta_metric(theta, folds, seconds=180):
 
 
 training_policy = Policy()
-optimizer = optim.Adam(training_policy.parameters(), lr=1e-2)
+optimizer = optim.Adam(training_policy.parameters(), lr=1e-1)
 eps = np.finfo(np.float32).eps.item()
 
 
@@ -104,6 +105,8 @@ def main():
         if i_episode % 50 == 0:
             print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f} \t Score: {}'.format(
                 i_episode, total_reward, running_reward, score))
+            a_temp = [np.argmax(a_) for a_ in A]
+            print(Counter(a_temp))
         if running_reward > 10:
             print("Solved! Running reward is now {} and "
                   "the last episode runs to time steps!".format(running_reward))
