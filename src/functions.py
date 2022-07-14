@@ -98,18 +98,17 @@ def clean_up(state):
 
 
 # RL Environment
-def reward_function(state, A):
+def reward_function(state, A, rewards_H):
     from global_ import fatigue_multiplier
     if timestep_bool(state) and not state['t'] == 0:
         reward = 0
-        if A[-1][-1] != 1:
-            reward += -fatigue_multiplier*(1+np.argmax(A[-1]))
         for trash_id_state, trash_obj in state['trash_objects'].items():
             if trash_obj.x > cnvwidth and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
                 reward += -1
 
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
+        rewards_H.append(reward)
         return reward
     elif state['t'] == 0:
         return 0
@@ -149,6 +148,7 @@ def action_function(state, X_t, A, input_theta, input_policy, enum_cells):
             a_t, a_t_index = policy(state, input_policy, X_t, input_theta, enum_cells)  # returns 0-15 or trash obj
             action_vector[a_t_index] = 1
             A.append(action_vector)
+
         else:
             a_t = False
     if tstep_bool:
@@ -170,9 +170,7 @@ def pick_action_index(input_theta, X_t, Yhat_H):
     return 3
 
 
-
 def policy(state, policy_n, X_t, input_theta, enumCells):
-
     action = False
     ybelts = [250, 450, 650]
 

@@ -23,10 +23,10 @@ def simulator(input_theta, input_policy, seconds=180, cells=(0, 1, 2, 3, 4)):
                  'Element Grid': [[[] for _ in range(33)] for _ in range(3)]}}
     X = []
     A = []
-    Yhat_H = []
+    rewards_H = []
 
     for i in range(seconds * s_to_ms):
-        reward = reward_function(state, A)
+        reward = reward_function(state, A, rewards_H)
         total_reward += reward
         state = transition(state, a_t, X, cells)
         a_t = action_function(state, X[-1], A, input_theta, input_policy,enum_cells)
