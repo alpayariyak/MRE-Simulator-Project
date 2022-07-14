@@ -1,7 +1,7 @@
 import math
 from sim_v3 import cnvwidth, s_to_ms, timestep
 
-
+y_cells = {250:0, 450:1, 650:2}
 class Simulator_Object:
 
     def __init__(self, obj, x, y, speedx=0, speedy=0, rot=0, width=100, height=100):
@@ -83,16 +83,22 @@ class Trash_Object(Simulator_Object):
 
         self.deleted = False
         self.visibility = trash_visibility[trash_classes.index(obj)]
-
+        self.row = -999
+        self.column = -999
         if self.obj_class == 'reject':
             global_.total_rejects += 1
 
+    def getCell(self):
+        return y_cells[self.hitbox['y']], math.floor((self.hitbox['x']+250)/3024) #row, col
 
-    def update_position(self):
+    def update_position(self, state):
         self.x = self.x + self.speedx
         self.y = self.y + self.speedy
         self.hitbox["x"] += self.speedx
         self.hitbox["y"] += self.speedy
+        self.row, self.column = self.getCell()
+        state['grid']['Full Grid'][self.row][self.column][int(self.obj_class != 'reject')] += 1
+        state['grid']['Element Grid'][self.row][self.column].append(self)
 
     def set_position(self, new_x, new_y):
         self.x = new_x

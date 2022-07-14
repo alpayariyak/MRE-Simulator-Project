@@ -3,8 +3,9 @@ import numpy as np
 from sim_v3 import cnvwidth, s_to_ms, timestep, create_interval, fatigue_constant
 from random import choice, randint, random
 from numpy import exp, array, cumsum
-from math import sqrt, ceil
+from math import sqrt, ceil, floor
 from scipy.special import softmax
+
 from copy import copy
 
 belt_indexes = {250: [0, 1],
@@ -132,29 +133,23 @@ def timeout_function(action):
     return int(ceil((t / s_to_ms) / timestep))
 
 
-def action_function(state, X_t, A, input_theta, input_policy, Yhat_H):
+
+def action_function(state, X_t, A, input_theta, input_policy, enum_cells):
     tstep_bool = timestep_bool(state)
+
     if timeout_bool(state):
         a_t = False
         state['timeout'] -= 1
 
         if tstep_bool:
-            A.append([0, 0, 0, 1])
+            A.append(array([0 for _ in range(len(enum_cells) + 1)]))
 
     else:
         if tstep_bool:
-            belt_action_vector = {200: [1, 0, 0, 0],
-                                  400: [0, 1, 0, 0],
-                                  600: [0, 0, 1, 0]}
-            a_t = policy(state, input_policy, X_t, input_theta, Yhat_H)  # returns 0, 1, 2 or trash obj
-
-            if isinstance(a_t, int):
-                action_vector = [0, 0, 0, 0]
-                action_vector[a_t] = 1
-                A.append(action_vector)
-            else:
-                A.append(belt_action_vector[a_t.y])
-
+            action_vector = array([0 for _ in range(len(enum_cells) + 1)])
+            a_t, a_t_index = policy(state, input_policy, X_t, input_theta, enum_cells)  # returns 0-15 or trash obj
+            action_vector[a_t_index] = 1
+            A.append(action_vector)
         else:
             a_t = False
     if tstep_bool:
@@ -176,61 +171,85 @@ def pick_action_index(input_theta, X_t, Yhat_H):
     return 3
 
 
-def policy(state, policy_n, X_t, input_theta, Yhat_H):
+
+def policy(state, policy_n, X_t, input_theta, enumCells):
+
     action = False
     ybelts = [250, 450, 650]
 
     if policy_n == 5:
-        action_index = pick_action_index(input_theta, X_t, Yhat_H)
-        action = action_index
-        if action_index == 3:
-            return 3
+        action_index = RL_v2.select_action(X_t, input_theta)
+        if action_index == 15:
+            return 15, 15
+        action_cell_index = enumCells[action_index]
+        action_cell = state['grid']['Element Grid'][action_cell_index[0]][action_cell_index[1]]
+        if action_cell:
+            return action_cell[0], action_index#hit
+        else:
+            return action_index, action_index #miss
 
-    for trash_obj_id, trash_obj in state['trash_objects'].items():
-        if policy_n == 5:
-            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelts[action_index]):
-                return trash_obj
-        elif policy_n == 0:
-            action = False
-        elif policy_n == 1:
-            for ybelt in ybelts:
-                if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt) and trash_obj.obj_class == 'reject':
-                    return trash_obj
-                else:
-                    action = 3
-        ####################################
+    # for trash_obj_id, trash_obj in state['trash_objects'].items():
+    #     if policy_n == 0:
+    #         action = False
+    #     elif policy_n == 1:
+    #         for ybelt in ybelts:
+    #             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt) and trash_obj.obj_class == 'reject':
+    #                 return trash_obj
+    #             else:
+    #                 action = 3
+    #     ####################################
+    #
+    #     ####################################
+    #     elif policy_n == 6:
+    #         if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
+    #                 and X_t == [0, 1, 1]:
+    #             return trash_obj
 
-        ####################################
-        elif policy_n == 6:
-            if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
-                    and X_t == [0, 1, 1]:
-                return trash_obj
-
-    return action
+    #return action
 
 
-def transition(state, a_t, X):
+def reset_grid(state):
+    state['grid']['Full Grid'] = [[[0, 0] for _ in range(33)] for _ in range(3)]
+    state['grid']['Element Grid'] = [[[] for _ in range(33)] for _ in range(3)]
+
+
+def cells_enum(cells):
+    cell_list = []
+    for r in range(3):
+        for c in cells:
+            cell_list.append([r, c])
+    cells_dictionary = {cell_n: cell_list[cell_n] for cell_n in range(len(cell_list))}
+    return cells_dictionary
+
+
+def record_state(state, X, cells):
+    result = []
+    for y in range(3):
+        for x_cell in cells:
+            for element in range(2):
+                result.append(state['grid']['Full Grid'][y][x_cell][element])
+    result.append(state['fatigue'])
+    result.append(state['t'] / 180000)
+    X.append(array(result))
+
+
+def transition(state, a_t, X, cells):
     new_state = state
+
     if new_state['t'] % create_interval == 0:
         makeRandomTrash(1)
         makeRandomTrash(2)
         makeRandomTrash(3)
 
     if timestep_bool(new_state):
-        RL_state = [0, 0, 0, 0, 0, 0, 1]
-        new_state['old score'] = state['score']
+        reset_grid(new_state)
+
         to_delete = []
         to_delete_bool = False
-        if not a_t == 3: #if not do nothing
-            if a_t == 0:
-                new_state['fatigue'] += 0.00036
+        if not a_t == 15:  # if not do nothing
+            if not isinstance(a_t, Trash_Object):
+                new_state['fatigue'] += 0.00005 * (floor(a_t/5) + 1)
                 # new_state['timeout'] += 0
-            elif a_t == 1:
-                new_state['fatigue'] += 0.00036 *2
-                # new_state['timeout'] += 1
-            elif a_t == 2:
-                new_state['fatigue'] += 0.00036 *3
-                # new_state['timeout'] += 2
             else:
                 if probability(1 - new_state['fatigue'], speed_probability[a_t.speedx],
                                visibility_probability[a_t.visibility]):
@@ -250,18 +269,10 @@ def transition(state, a_t, X):
 
             if not trash_obj.deleted:
                 auto_speed(trash_obj)
-                trash_obj.update_position()
-
-                for y_belt, indexes in belt_indexes.items():
-                    if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
-                                                             y_belt) and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
-                        RL_state[belt_indexes[y_belt][0]] = 1
-                    if trash_obj.checkCoordinateIntersection(cnvwidth / 2,
-                                                             y_belt) and trash_obj.obj_class == 'reject' and not trash_obj.deleted:
-                        RL_state[belt_indexes[y_belt][1]] = 1
+                trash_obj.update_position(new_state)
             else:
                 to_delete.append(trash_obj_id)
-        X.append(RL_state)
+        record_state(new_state, X, cells)
     state['t'] += 1
 
     return new_state
