@@ -89,7 +89,7 @@ class Trash_Object(Simulator_Object):
             global_.total_rejects += 1
 
     def getCell(self):
-        return y_cells[self.hitbox['y']], math.floor((self.hitbox['x']+250)/3024) #row, col
+        return y_cells[self.hitbox['y']], math.floor((self.hitbox['x']+250)/100)  #row, col
 
     def update_position(self, state):
         self.x = self.x + self.speedx
@@ -97,6 +97,8 @@ class Trash_Object(Simulator_Object):
         self.hitbox["x"] += self.speedx
         self.hitbox["y"] += self.speedy
         self.row, self.column = self.getCell()
+        if self.column > 32:
+            self.column = 32
         state['grid']['Full Grid'][self.row][self.column][int(self.obj_class != 'reject')] += 1
         state['grid']['Element Grid'][self.row][self.column].append(self)
 
