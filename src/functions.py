@@ -5,7 +5,7 @@ from random import choice, randint, random
 from numpy import exp, array, cumsum
 from math import sqrt, ceil, floor
 from scipy.special import softmax
-
+import RL_v2
 from copy import copy
 
 belt_indexes = {250: [0, 1],
@@ -133,7 +133,6 @@ def timeout_function(action):
     return int(ceil((t / s_to_ms) / timestep))
 
 
-
 def action_function(state, X_t, A, input_theta, input_policy, enum_cells):
     tstep_bool = timestep_bool(state)
 
@@ -250,6 +249,7 @@ def transition(state, a_t, X, cells):
             if not isinstance(a_t, Trash_Object):
                 new_state['fatigue'] += 0.00005 * (floor(a_t/5) + 1)
                 # new_state['timeout'] += 0
+
             else:
                 if probability(1 - new_state['fatigue'], speed_probability[a_t.speedx],
                                visibility_probability[a_t.visibility]):
