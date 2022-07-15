@@ -1,14 +1,14 @@
 game_length = 180
 s_to_ms = 1000
-timestep = 0.1
+timestep = 0.5
 create_interval = 0.5 * s_to_ms  # 5 seconds
 cnvheight, cnvwidth = 1230, 3024  # or 800
 fatigue_constant = 0.00005
 
 from functions import *
+from global_ import cells
 
-
-def simulator(input_theta, input_policy, seconds=180, cells=(0, 1, 2, 3, 4)):
+def simulator(input_theta, input_policy, seconds=180, cells=cells):
     enum_cells = cells_enum(cells)
     import global_
     trash_id, reward, i, fatigue, timeout = 0, 0, 0, 0, 0

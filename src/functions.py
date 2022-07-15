@@ -176,8 +176,8 @@ def policy(state, policy_n, X_t, input_theta, enumCells):
 
     if policy_n == 5:
         action_index = RL_v2.select_action(X_t, input_theta)
-        if action_index == 15:
-            return 15, 15
+        if action_index == len(enumCells):
+            return len(enumCells), len(enumCells)
         action_cell_index = enumCells[action_index]
         action_cell = state['grid']['Element Grid'][action_cell_index[0]][action_cell_index[1]]
         if action_cell:
@@ -243,7 +243,7 @@ def transition(state, a_t, X, cells):
 
         to_delete = []
         to_delete_bool = False
-        if not a_t == 15:  # if not do nothing
+        if not a_t == len(cells)*3:  # if not do nothing
             if not isinstance(a_t, Trash_Object):
                 new_state['fatigue'] += 0.00005 * (floor(a_t/5) + 1)
                 # new_state['timeout'] += 0

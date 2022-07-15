@@ -4,3 +4,4 @@ total_rejects = 0
 to_delete = []
 fatigue_multiplier = 0
 
+cells = (17,)

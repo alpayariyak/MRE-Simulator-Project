@@ -27,12 +27,12 @@ args = parser.parse_args()
 #
 # env.seed(args.seed)
 # torch.manual_seed(args.seed)
-
+from global_ import cells
 
 class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(32, 16)
+        self.affine1 = nn.Linear(len(cells)*2*3 + 2, len(cells)*3+1)
         # self.dropout = nn.Dropout(p=0.6)
         # self.affine2 = nn.Linear(4, 4)
         self.saved_log_probs = []
