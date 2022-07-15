@@ -88,6 +88,7 @@ def main():
 
 
     from sim_v3 import simulator
+
     print("Random theta avg score")
     av = 0
     for i in range(20):
@@ -96,7 +97,6 @@ def main():
     av = av / 20
     running_reward = av
     print(av)
-
 
     for i_episode in range(100000):
         A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
@@ -114,7 +114,7 @@ def main():
             print("Solved! Running reward is now {} and "
                   "the last episode runs to time steps!".format(running_reward))
             break
-        if i_episode % 500 == 0:
+        if i_episode % 500 == 0 and i_episode != 0:
             avg = 0
             for i in range(30):
                 A, X, total_reward, rewards_H, score = simulator(training_policy, 5, 180)

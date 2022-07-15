@@ -111,6 +111,7 @@ def reward_function(state, A, rewards_H):
         rewards_H.append(reward)
         return reward
     elif state['t'] == 0:
+        rewards_H.append(0)
         return 0
     else:
         return 0
@@ -136,38 +137,27 @@ def action_function(state, X_t, A, input_theta, input_policy, enum_cells):
     tstep_bool = timestep_bool(state)
 
     if timeout_bool(state):
+        action_vector = array([0 for _ in range(len(enum_cells) + 1)])
         a_t = False
         state['timeout'] -= 1
 
         if tstep_bool:
-            A.append(array([0 for _ in range(len(enum_cells) + 1)]))
+            action_vector[-1] = 1
+            A.append(action_vector)
 
     else:
+        action_vector = array([0 for _ in range(len(enum_cells) + 1)])
         if tstep_bool:
-            action_vector = array([0 for _ in range(len(enum_cells) + 1)])
             a_t, a_t_index = policy(state, input_policy, X_t, input_theta, enum_cells)  # returns 0-15 or trash obj
             action_vector[a_t_index] = 1
             A.append(action_vector)
 
         else:
             a_t = False
+
     if tstep_bool:
         clean_up(state)
     return a_t
-
-
-def pick_action_index(input_theta, X_t, Yhat_H):
-    Yhat = softmax(input_theta.T.dot(X_t))
-    Yhat_H.append(Yhat)
-
-    cumsum_Yhat = cumsum(Yhat)
-    random_number = random()
-
-    for index in range(len(cumsum_Yhat)):
-        action_probability = cumsum_Yhat[index]
-        if random_number < action_probability:
-            return index
-    return 3
 
 
 def policy(state, policy_n, X_t, input_theta, enumCells):
@@ -181,28 +171,27 @@ def policy(state, policy_n, X_t, input_theta, enumCells):
         action_cell_index = enumCells[action_index]
         action_cell = state['grid']['Element Grid'][action_cell_index[0]][action_cell_index[1]]
         if action_cell:
-            return action_cell[0], action_index#hit
+            return action_cell[0], action_index  # hit
         else:
-            return action_index, action_index #miss
+            return action_index, action_index  # miss
+    if policy_n == 1:
+        for trash_obj_id, trash_obj in state['trash_objects'].items():
+            #     if policy_n == 0:
+            #         action = False
+            for ybelt in ybelts:
+                if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt) and trash_obj.obj_class == 'reject':
+                    return trash_obj
+                else:
+                    action = len(enumCells) + 1
+        #     ####################################
+        #
+        #     ####################################
+        #     elif policy_n == 6:
+        #         if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
+        #                 and X_t == [0, 1, 1]:
+        #             return trash_obj
 
-    # for trash_obj_id, trash_obj in state['trash_objects'].items():
-    #     if policy_n == 0:
-    #         action = False
-    #     elif policy_n == 1:
-    #         for ybelt in ybelts:
-    #             if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt) and trash_obj.obj_class == 'reject':
-    #                 return trash_obj
-    #             else:
-    #                 action = 3
-    #     ####################################
-    #
-    #     ####################################
-    #     elif policy_n == 6:
-    #         if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
-    #                 and X_t == [0, 1, 1]:
-    #             return trash_obj
-
-    #return action
+        return action
 
 
 def reset_grid(state):
@@ -243,9 +232,9 @@ def transition(state, a_t, X, cells):
 
         to_delete = []
         to_delete_bool = False
-        if not a_t == len(cells)*3:  # if not do nothing
-            if not isinstance(a_t, Trash_Object):
-                new_state['fatigue'] += 0.00005 * (floor(a_t/5) + 1)
+        if not a_t == len(cells) * 3:  # if not do nothing
+            if isinstance(a_t, int):
+                new_state['fatigue'] += 0.00005 * (floor(a_t / 5) + 1)
                 # new_state['timeout'] += 0
 
             else:
@@ -254,7 +243,7 @@ def transition(state, a_t, X, cells):
                     a_t.dragToTrash()
                     a_t.deleted = True
                 new_state['fatigue'] += fatigue_function(a_t)
-                #new_state['timeout'] += timeout_function(a_t)
+                # new_state['timeout'] += timeout_function(a_t)
 
         from global_ import to_delete
         for trash_obj_id, trash_obj in new_state['trash_objects'].items():

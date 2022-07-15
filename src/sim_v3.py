@@ -1,6 +1,6 @@
 game_length = 180
 s_to_ms = 1000
-timestep = 0.5
+timestep = 0.25
 create_interval = 0.5 * s_to_ms  # 5 seconds
 cnvheight, cnvwidth = 1230, 3024  # or 800
 fatigue_constant = 0.00005
