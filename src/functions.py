@@ -175,7 +175,10 @@ def policy(state, policy_n, X_t, input_theta, enumCells):
             return action_cell[0], action_index  # hit
         else:
             return action_index, action_index  # miss
-    if policy_n == 1:
+
+    elif policy_n == 0:
+        return len(enumCells), len(enumCells)
+    elif policy_n == 1:
         for trash_obj_id, trash_obj in state['trash_objects'].items():
             #     if policy_n == 0:
             #         action = False

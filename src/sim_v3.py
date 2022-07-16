@@ -1,9 +1,9 @@
 game_length = 180
 s_to_ms = 1000
-timestep = 0.25
+timestep = 0.1
 create_interval = 0.5 * s_to_ms  # 5 seconds
 cnvheight, cnvwidth = 1230, 3024  # or 800
-fatigue_constant = 0.000005
+fatigue_constant = 0.000001
 
 from functions import *
 from global_ import cells

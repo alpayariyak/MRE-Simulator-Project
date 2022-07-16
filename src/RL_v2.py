@@ -89,6 +89,15 @@ def main():
 
     from sim_v3 import simulator
 
+    print("0 policy avg score")
+    av = 0
+    for i in range(20):
+        A, X, total_reward, rewards_H, score = simulator(training_policy, 0)
+        av += total_reward
+    av = av / 20
+    running_reward = av
+    print(av)
+
     print("Random theta avg score")
     av = 0
     for i in range(20):
