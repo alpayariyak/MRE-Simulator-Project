@@ -146,8 +146,9 @@ def action_function(state, X_t, A, input_theta, input_policy, enum_cells):
             A.append(action_vector)
 
     else:
-        action_vector = array([0 for _ in range(len(enum_cells) + 1)])
+
         if tstep_bool:
+            action_vector = array([0 for _ in range(len(enum_cells) + 1)])
             a_t, a_t_index = policy(state, input_policy, X_t, input_theta, enum_cells)  # returns 0-15 or trash obj
             action_vector[a_t_index] = 1
             A.append(action_vector)
