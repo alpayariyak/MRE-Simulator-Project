@@ -8,7 +8,7 @@ fatigue_constant = 0.000001
 from functions import *
 from global_ import cells
 
-def simulator(input_theta, input_policy, seconds=180, cells=cells):
+def simulator(input_theta, input_policy, seconds=180, cells=cells, print_state = False):
     enum_cells = cells_enum(cells)
     import global_
     trash_id, reward, i, fatigue, timeout = 0, 0, 0, 0, 0
@@ -30,5 +30,7 @@ def simulator(input_theta, input_policy, seconds=180, cells=cells):
         total_reward += reward
         state = transition(state, a_t, X, cells)
         a_t = action_function(state, X[-1], A, input_theta, input_policy,enum_cells)
+    if(print_state):
+        print(state)
     return A, X, total_reward, rewards_H, state['score']
 

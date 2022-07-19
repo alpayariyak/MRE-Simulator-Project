@@ -108,6 +108,8 @@ def reward_function(state, A, rewards_H):
 
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
+        if A[-1][-1] != 1:
+            reward -= np.argmax(A[-1]) //3 * fatigue_multiplier
         rewards_H.append(reward)
         return reward
     elif state['t'] == 0:
@@ -238,7 +240,7 @@ def transition(state, a_t, X, cells):
         to_delete_bool = False
         if not a_t == len(cells) * 3:  # if not do nothing
             if isinstance(a_t, int):
-                new_state['fatigue'] += 0.00005 * (floor(a_t / 5) + 1)
+                new_state['fatigue'] += 0.00009 * (floor(a_t / 5) + 1)
                 # new_state['timeout'] += 0
 
             else:
@@ -264,6 +266,6 @@ def transition(state, a_t, X, cells):
             else:
                 to_delete.append(trash_obj_id)
         record_state(new_state, X, cells)
-    state['t'] += 1
 
+    state['t'] += 1
     return new_state

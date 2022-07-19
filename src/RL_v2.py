@@ -28,21 +28,26 @@ args = parser.parse_args()
 # env.seed(args.seed)
 # torch.manual_seed(args.seed)
 from global_ import cells
+# Check PyTorch has access to MPS (Metal Performance Shader, Apple's GPU architecture)
+torch.device = "mps" if torch.backends.mps.is_available() else "cpu"
+print(f"Using device: {torch.device}")
 
 class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(len(cells)*2*3 + 2, len(cells)*3+1)
-        # self.dropout = nn.Dropout(p=0.6)
-        # self.affine2 = nn.Linear(4, 4)
+        self.input_n = len(cells)*2*3 + 2
+        self.output_n = len(cells)*3+1
+        self.affine1 = nn.Linear(self.input_n, 128)
+        self.dropout = nn.Dropout(p=0.6)
+        self.affine2 = nn.Linear(128, self.output_n)
         self.saved_log_probs = []
         self.rewards = []
 
     def forward(self, x):
-        # x = self.affine1(x)
-        # x = self.dropout(x)
-        # x = F.relu(x)
-        action_scores = self.affine1(x)
+        x = self.affine1(x)
+        x = self.dropout(x)
+        x = F.relu(x)
+        action_scores = self.affine2(x)
         return F.softmax(action_scores, dim=1)
 
 
@@ -124,6 +129,7 @@ def main():
                   "the last episode runs to time steps!".format(running_reward))
             break
         if i_episode % 500 == 0 and i_episode != 0:
+            simulator(training_policy, 5, 180, print_state=True)
             avg = 0
             for i in range(30):
                 A, X, total_reward, rewards_H, score = simulator(training_policy, 5, 180)
