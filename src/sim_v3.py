@@ -9,12 +9,13 @@ from functions import *
 from global_ import cells
 
 def simulator(input_theta, input_policy, seconds=180, cells=cells, print_state = False):
-    enum_cells = cells_enum(cells)
     import global_
+    timeout_timestep_indexes = []
     trash_id, reward, i, fatigue, timeout = 0, 0, 0, 0, 0
     score, total_reward = 100, 100
     global_.trash_objects = {}
     global_.trash_id = 0
+    global_.enum_cells = cells_enum(cells)
     a_t = False  # for i = 0
     state = {'trash_objects': global_.trash_objects, 'score': score, 'fatigue': fatigue,
              'timeout': timeout, 't': i,
@@ -29,8 +30,11 @@ def simulator(input_theta, input_policy, seconds=180, cells=cells, print_state =
         reward = reward_function(state, A, rewards_H)
         total_reward += reward
         state = transition(state, a_t, X, cells)
-        a_t = action_function(state, X[-1], A, input_theta, input_policy,enum_cells)
+        a_t = action_function(state, X[-1], A, input_theta, input_policy, timeout_timestep_indexes)
     if(print_state):
-        print(state)
+        print(state['fatigue'], state['timeout'], len(timeout_timestep_indexes))
+    clean_RL_output(X, A, rewards_H, timeout_timestep_indexes)
     return A, X, total_reward, rewards_H, state['score']
+
+
 

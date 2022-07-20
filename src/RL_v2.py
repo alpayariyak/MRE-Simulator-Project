@@ -61,6 +61,8 @@ def select_action(state, in_policy):
 
 
 def finish_episode():
+    total_policy_loss = torch.empty()
+    
     R = 0
     policy_loss = []
     returns = []  # sum of rewards
@@ -96,21 +98,21 @@ def main():
 
     print("0 policy avg score")
     av = 0
-    for i in range(20):
-        A, X, total_reward, rewards_H, score = simulator(training_policy, 0)
-        av += total_reward
-    av = av / 20
+    # for i in range(20):
+    #     A, X, total_reward, rewards_H, score = simulator(training_policy, 0)
+    #     av += total_reward
+    # av = av / 20
     running_reward = av
-    print(av)
-
-    print("Random theta avg score")
-    av = 0
-    for i in range(20):
-        A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
-        av += total_reward
-    av = av / 20
-    running_reward = av
-    print(av)
+    # print(av)
+    #
+    # print("Random theta avg score")
+    # av = 0
+    # for i in range(20):
+    #     A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
+    #     av += total_reward
+    # av = av / 20
+    # running_reward = av
+    # print(av)
 
     for i_episode in range(100000):
         A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
@@ -135,9 +137,6 @@ def main():
                 A, X, total_reward, rewards_H, score = simulator(training_policy, 5, 180)
                 avg += total_reward
             print(avg / 30)
-
-
-
 
 if __name__ == '__main__':
     main()

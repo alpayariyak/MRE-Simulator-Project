@@ -1,3 +1,4 @@
+
 import numpy as np
 
 from sim_v3 import cnvwidth, s_to_ms, timestep, create_interval, fatigue_constant
@@ -7,11 +8,10 @@ from math import sqrt, ceil, floor
 from scipy.special import softmax
 import RL_v2
 from copy import copy
-
-belt_indexes = {250: [0, 1],
-                450: [2, 3],
-                650: [4, 5]}
-
+from global_ import timeout_multiplier
+belt_indexes = {0:250,
+                1:450,
+                2:650}
 
 # Math related
 def probability(*probs):
@@ -33,7 +33,9 @@ def get_dist_from_trash(x, y):
 
 from classes import Trash_Object, Belt
 from assets import trash_classes, belts, trash_bin, speed_probability, visibility_probability
-
+speed_belt = {belts[0].belt_speed: 0,
+                      belts[1].belt_speed: 1,
+                      belts[2].belt_speed: 2}
 
 def makeRandomTrash(beltNumber):
     from global_ import trash_id, trash_objects
@@ -108,8 +110,6 @@ def reward_function(state, A, rewards_H):
 
             elif trash_obj in trash_bin and trash_obj.obj_class != 'reject' and not trash_obj.deleted:
                 reward += -1
-        if A[-1][-1] != 1:
-            reward -= np.argmax(A[-1]) //3 * fatigue_multiplier
         rewards_H.append(reward)
         return reward
     elif state['t'] == 0:
@@ -124,31 +124,35 @@ def fatigue_function(action):
 
 
 def timeout_function(action):
-    dist = get_dist_from_trash(action.x, action.y)
-    t = 0
-    if action.speedx == belts[0].belt_speed:  # belt 1
-        t = 0.26 * dist + 533.24
-    if action.speedx == belts[1].belt_speed:  # belt 2
-        t = 0.15 * dist + 752.35
-    if action.speedx == belts[2].belt_speed:  # belt 3
-        t = 0.08 * dist + 1140.88
-    return int(ceil((t / s_to_ms) / timestep))
+    from global_ import enum_cells
+
+    if isinstance(action, Trash_Object):
+        x, y = action.x, action.y
+        belt = speed_belt[action.speedx]
+
+    else:
+        belt, col = enum_cells[action]
+        x = col * 100 -250
+        y = belt*200 + 250
+
+    dist = get_dist_from_trash(x, y)
+    beltspeed_t = {0: 0.26 * dist + 533.24,
+                   1: 0.15 * dist + 752.35,
+                   2: 0.15 * dist + 952.35
+                   }
+    return int(beltspeed_t[belt])
 
 
-def action_function(state, X_t, A, input_theta, input_policy, enum_cells):
+def action_function(state, X_t, A, input_theta, input_policy, timeout_timestep_indexes):
+    from global_ import enum_cells
     tstep_bool = timestep_bool(state)
 
     if timeout_bool(state):
-        action_vector = array([0 for _ in range(len(enum_cells) + 1)])
         a_t = False
-        state['timeout'] -= 1
-
         if tstep_bool:
-            action_vector[-1] = 1
-            A.append(action_vector)
-
+            A.append(array([0 for _ in range(len(enum_cells) + 1)]))
+            timeout_timestep_indexes.append(len(A) - 1)
     else:
-
         if tstep_bool:
             action_vector = array([0 for _ in range(len(enum_cells) + 1)])
             a_t, a_t_index = policy(state, input_policy, X_t, input_theta, enum_cells)  # returns 0-15 or trash obj
@@ -186,16 +190,9 @@ def policy(state, policy_n, X_t, input_theta, enumCells):
             #         action = False
             for ybelt in ybelts:
                 if trash_obj.checkCoordinateIntersection(cnvwidth / 2, ybelt) and trash_obj.obj_class == 'reject':
-                    return trash_obj
+                    return trash_obj, 3
                 else:
-                    action = len(enumCells) + 1
-        #     ####################################
-        #
-        #     ####################################
-        #     elif policy_n == 6:
-        #         if trash_obj.checkCoordinateIntersection(cnvwidth / 2, 450) and trash_obj.obj_class == 'reject' \
-        #                 and X_t == [0, 1, 1]:
-        #             return trash_obj
+                    action = len(enumCells), len(enumCells)
 
         return action
 
@@ -227,6 +224,7 @@ def record_state(state, X, cells):
 
 def transition(state, a_t, X, cells):
     new_state = state
+    state['timeout'] -= min(1, state['timeout'])
 
     if new_state['t'] % create_interval == 0:
         makeRandomTrash(1)
@@ -238,18 +236,17 @@ def transition(state, a_t, X, cells):
 
         to_delete = []
         to_delete_bool = False
-        if not a_t == len(cells) * 3:  # if not do nothing
-            if isinstance(a_t, int):
-                new_state['fatigue'] += 0.00009 * (floor(a_t / 5) + 1)
-                # new_state['timeout'] += 0
+        if type(a_t) != bool and a_t != len(cells) * 3:
+                new_state['timeout'] += timeout_function(a_t) *timeout_multiplier
+                if isinstance(a_t, int):
+                    new_state['fatigue'] += 0.00009 * (floor(a_t / 5) + 1)
+                else:
+                    new_state['fatigue'] += fatigue_function(a_t)
+                    if probability(1 - new_state['fatigue'], speed_probability[a_t.speedx],
+                                   visibility_probability[a_t.visibility]):
+                        a_t.dragToTrash()
+                        a_t.deleted = True
 
-            else:
-                if probability(1 - new_state['fatigue'], speed_probability[a_t.speedx],
-                               visibility_probability[a_t.visibility]):
-                    a_t.dragToTrash()
-                    a_t.deleted = True
-                new_state['fatigue'] += fatigue_function(a_t)
-                # new_state['timeout'] += timeout_function(a_t)
 
         from global_ import to_delete
         for trash_obj_id, trash_obj in new_state['trash_objects'].items():
@@ -269,3 +266,20 @@ def transition(state, a_t, X, cells):
 
     state['t'] += 1
     return new_state
+
+
+def clean_RL_output(X_H, A_H, rewards_H, timeout_idx):
+    for idx in timeout_idx:
+        if idx < len(rewards_H)-1:
+            rewards_H[idx+1] += rewards_H[idx]
+
+    delete_multiple_element(X_H, timeout_idx)
+    delete_multiple_element(A_H, timeout_idx)
+    delete_multiple_element(rewards_H, timeout_idx)
+
+
+def delete_multiple_element(list_object, indices):
+    indices = sorted(indices, reverse=True)
+    for idx in indices:
+        if idx < len(list_object):
+            list_object.pop(idx)
