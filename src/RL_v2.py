@@ -96,32 +96,33 @@ optimizer = optim.Adam([
 eps = np.finfo(np.float32).eps.item()
 
 
-def main():
 
-
+def random_and_zero():
     from sim_v3 import simulator
-
     print("0 policy avg score")
     av = 0
-    # for i in range(20):
-    #     A, X, total_reward, rewards_H, score = simulator(training_policy, 0)
-    #     av += total_reward
-    # av = av / 20
-    running_reward = av
-    # print(av)
-    #
-    # print("Random theta avg score")
-    # av = 0
-    # for i in range(20):
-    #     A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
-    #     av += total_reward
-    # av = av / 20
-    # running_reward = av
-    # print(av)
+    for i in range(20):
+         A, X, total_reward, rewards_H, score = simulator(training_policy, 0)
+         av += total_reward
+    av = av / 20
 
-    for i_episode in range(3):
-        training_policy.total_saved_log_probs = [[] for _ in range(3)]
-        for n in range(3):
+    print(av)
+
+    print("Random theta avg score")
+    av = 0
+    for i in range(20):
+        A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
+        av += total_reward
+    av = av / 20
+    unning_reward = av
+    print(av)
+
+def train(epochs, minibatch_size):
+    from sim_v3 import simulator
+    running_reward =10
+    for i_episode in range(epochs):
+        training_policy.total_saved_log_probs = [[] for _ in range(minibatch_size)]
+        for n in range(minibatch_size):
             A, X, total_reward, rewards_H, score = simulator(training_policy, 5)
             training_policy.total_rewards.append(rewards_H)
             training_policy.total_saved_log_probs[n] = training_policy.saved_log_probs
@@ -130,15 +131,12 @@ def main():
         running_reward = 0.05 * total_reward + (1 - 0.05) * running_reward
         finish_episode()
 
-        if i_episode % 25 == 0:
+        if i_episode % 100 == 0:
             print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f} \t Score: {}'.format(
                 i_episode, total_reward, running_reward, score))
             a_temp = [np.argmax(a_) for a_ in A]
             print(Counter(a_temp))
-        if running_reward > 100:
-            print("Solved! Running reward is now {} and "
-                  "the last episode runs to time steps!".format(running_reward))
-            break
+
         if i_episode % 500 == 0 and i_episode != 0:
             simulator(training_policy, 5, 180, print_state=True)
             avg = 0
@@ -148,10 +146,10 @@ def main():
             print(avg / 30)
 
 if __name__ == '__main__':
-
+    #random_and_zero()
 
     start_time = time.time()
 
-    main()
+    train(5000, 1)
     # # trained_theta = train(5, 30, 0.3)
     print("--- %s seconds ---" % (time.time() - start_time))
