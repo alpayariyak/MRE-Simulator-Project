@@ -64,8 +64,10 @@ def select_action(state, in_policy):
 
 
 def finish_episode():
-    total_policy_loss = torch.empty(())
-    for run in range(len(training_policy.total_saved_log_probs)):
+
+    minibatch_size = len(training_policy.total_saved_log_probs)
+    total_policy_loss = []
+    for run in range(minibatch_size):
         R = 0
         policy_loss = []
         returns = []  # sum of rewards
@@ -77,14 +79,15 @@ def finish_episode():
         for log_prob, R in zip(training_policy.total_saved_log_probs[run], returns):
             policy_loss.append(-log_prob * R)
         policy_loss = torch.cat(policy_loss).sum()
-        total_policy_loss += policy_loss/5
+        total_policy_loss.append(policy_loss)
 
+    total_policy_loss = torch.stack(total_policy_loss).mean()
     optimizer.zero_grad()
     total_policy_loss.backward()
     optimizer.step()
 
     del training_policy.rewards[:]
-    del training_policy.saved_log_probs[:]
+
 
 
 training_policy = Policy()
@@ -150,6 +153,6 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    train(5000, 1)
+    train(5000, 2)
     # # trained_theta = train(5, 30, 0.3)
     print("--- %s seconds ---" % (time.time() - start_time))
