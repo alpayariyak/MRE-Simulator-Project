@@ -37,17 +37,17 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         self.input_n = len(cells)*2*3 + 2
         self.output_n = len(cells)*3+1
-        self.affine1 = nn.Linear(self.input_n, 128)
-        self.dropout = nn.Dropout(p=0.6)
-        self.affine2 = nn.Linear(128, self.output_n)
+        self.affine1 = nn.Linear(self.input_n, self.output_n)
+        # self.dropout = nn.Dropout(p=0.6)
+        # self.affine2 = nn.Linear(128, self.output_n)
         self.saved_log_probs = []
         self.rewards = []
 
     def forward(self, x):
-        x = self.affine1(x)
-        x = self.dropout(x)
-        x = F.relu(x)
-        action_scores = self.affine2(x)
+        # x = self.affine1(x)
+        # x = self.dropout(x)
+        # x = F.relu(x)
+        action_scores = self.affine1(x)
         return F.softmax(action_scores, dim=1)
 
 
@@ -61,8 +61,6 @@ def select_action(state, in_policy):
 
 
 def finish_episode():
-    total_policy_loss = torch.empty()
-    
     R = 0
     policy_loss = []
     returns = []  # sum of rewards
@@ -82,12 +80,9 @@ def finish_episode():
     del training_policy.saved_log_probs[:]
 
 
+
 training_policy = Policy()
-optimizer = optim.Adam([
-            {'params': training_policy.affine1.weight},
-            {'params': training_policy.affine1.bias, 'lr': 1e-1}
-            # {'params': training_policy.layer2.weight, 'lr': 0.001}
-],  lr=1e-1)
+optimizer = optim.Adam(training_policy.parameters(), lr=1e-1)
 eps = np.finfo(np.float32).eps.item()
 
 
