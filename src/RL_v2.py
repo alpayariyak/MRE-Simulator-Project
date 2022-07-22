@@ -61,8 +61,6 @@ def select_action(state, in_policy):
 
 
 def finish_episode():
-    total_policy_loss = torch.empty()
-    
     R = 0
     policy_loss = []
     returns = []  # sum of rewards
