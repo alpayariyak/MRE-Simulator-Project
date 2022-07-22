@@ -61,8 +61,7 @@ def select_action(state, in_policy):
 
 
 def finish_episode():
-    total_policy_loss = torch.empty()
-    
+
     R = 0
     policy_loss = []
     returns = []  # sum of rewards
@@ -85,7 +84,9 @@ def finish_episode():
 training_policy = Policy()
 optimizer = optim.Adam([
             {'params': training_policy.affine1.weight},
-            {'params': training_policy.affine1.bias, 'lr': 1e-1}
+            {'params': training_policy.affine1.bias, 'lr': 1e-1},
+            {'params': training_policy.affine2.weight},
+            {'params': training_policy.affine2.bias, 'lr': 1e-1}
             # {'params': training_policy.layer2.weight, 'lr': 0.001}
 ],  lr=1e-1)
 eps = np.finfo(np.float32).eps.item()
@@ -126,10 +127,8 @@ def main():
                 i_episode, total_reward, running_reward, score))
             a_temp = [np.argmax(a_) for a_ in A]
             print(Counter(a_temp))
-        if running_reward > 100:
-            print("Solved! Running reward is now {} and "
-                  "the last episode runs to time steps!".format(running_reward))
-            break
+            print(training_policy.affine1.weight.grad)
+
         if i_episode % 500 == 0 and i_episode != 0:
             simulator(training_policy, 5, 180, print_state=True)
             avg = 0
